@@ -1,11 +1,9 @@
 # manager/rules.py
-
 import mysql.connector
-from manager.program import Program
+from src.manager.program import Program
 from datetime import datetime
 from src.config.queries import INSERT_RULE, SELECT_RULES, UPDATE_RULE, DELETE_RULE, INSERT_RULE_TO_PROGRAM, SELECT_RULES_BY_PROGRAM
 from src.config.credentials import db_config
-
 try:
         db = mysql.connector.connect(**db_config)
         cursor = db.cursor()
@@ -13,7 +11,8 @@ except mysql.connector.Error as err:
         print(f"Error: {err}")
         exit()
 
-class Rules(Program):
+# class Rules(Program):
+class Rules:
     def __init__(self, rulename, media_type, description, program_id=None):
         self.rulename = rulename
         self.media_type = media_type
@@ -38,6 +37,7 @@ class Rules(Program):
         try:
             cursor.execute(SELECT_RULES)
             rules = cursor.fetchall()
+            print(rules)
             return rules
         except mysql.connector.Error as err:
             return f"Error: {err}"
