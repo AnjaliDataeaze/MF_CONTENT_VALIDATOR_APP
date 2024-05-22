@@ -1,63 +1,63 @@
 # manager/config/queries.py
 
 INSERT_PROGRAM = """
-    INSERT INTO Program (name, description, Creation_timestamp, Updation_timestamp) 
+    INSERT INTO program (name, description, created_timestamp, lastupdated_timestamp) 
     VALUES (%s, %s, %s, %s)
 """
 
-SELECT_PROGRAMS = "SELECT * FROM Program"
+SELECT_PROGRAMS = "SELECT * FROM program"
 
 UPDATE_PROGRAM = """
-    UPDATE Program 
-    SET name = %s, description = %s, Updation_timestamp = %s 
+    UPDATE program 
+    SET name = %s, description = %s, lastupdated_timestamp = %s 
     WHERE id = %s
 """
 
-DELETE_PROGRAM = "DELETE FROM Program WHERE id = %s"
+DELETE_PROGRAM = "DELETE FROM program WHERE id = %s"
 
 INSERT_RULE = """
-    INSERT INTO Rules (rulename, media_type, description, Creation_timestamp, Updation_timestamp) 
+    INSERT INTO rules (rulename, media_type, description, created_timestamp, lastupdated_timestamp) 
     VALUES (%s, %s, %s, %s, %s)
 """
 
-SELECT_RULES = "SELECT * FROM Rules"
+SELECT_RULES = "SELECT * FROM rules"
 
 UPDATE_RULE = """
-    UPDATE Rules 
-    SET rulename = %s, media_type = %s, description = %s, Updation_timestamp = %s 
+    UPDATE rules 
+    SET rulename = %s, media_type = %s, description = %s, lastupdated_timestamp = %s 
     WHERE id = %s
 """
 
-DELETE_RULE = "DELETE FROM Rules WHERE id = %s"
+DELETE_RULE = "DELETE FROM rules WHERE id = %s"
 
 INSERT_DISCLAIMER = """
-    INSERT INTO Disclaimer (rule_id, disclaimer, Creation_timestamp, Updation_timestamp) 
+    INSERT INTO disclaimer (rule_id, disclaimer, created_timestamp, lastupdated_timestamp) 
     VALUES (%s, %s, %s, %s)
 """
 
-SELECT_DISCLAIMERS = "SELECT * FROM Disclaimer"
+SELECT_DISCLAIMERS = "SELECT * FROM disclaimer"
 
 UPDATE_DISCLAIMER = """
-    UPDATE Disclaimer 
-    SET rule_id = %s, disclaimer = %s, Updation_timestamp = %s 
+    UPDATE disclaimer 
+    SET rule_id = %s, disclaimer = %s, lastupdated_timestamp = %s 
     WHERE id = %s
 """
 
-DELETE_DISCLAIMER = "DELETE FROM Disclaimer WHERE id = %s"
+DELETE_DISCLAIMER = "DELETE FROM disclaimer WHERE id = %s"
 
 INSERT_RULE_TO_PROGRAM = """
-    INSERT INTO Rule_to_program (program_id, rules_id, Creation_timestamp, Updation_timestamp) 
+    INSERT INTO rule_to_program (program_id, rules_id, created_timestamp, lastupdated_timestamp) 
     VALUES (%s, %s, %s, %s)
 """
 
 SELECT_RULES_BY_PROGRAM = """
-    SELECT r.* FROM Rules r
+    SELECT r.* FROM rules r
     JOIN Rule_to_program rp ON r.id = rp.rules_id
     WHERE rp.program_id = %s
 """
 
 INSERT_DOCUMENT = """
-    INSERT INTO Document (doc_name, doc_type, Creation_timestamp, Updation_timestamp) 
+    INSERT INTO Document (doc_name, doc_type, created_timestamp, lastupdated_timestamp) 
     VALUES (%s, %s, %s, %s)
 """
 
@@ -65,19 +65,19 @@ SELECT_DOCUMENTS = "SELECT * FROM Document"
 
 UPDATE_DOCUMENT = """
     UPDATE Document 
-    SET doc_name = %s, doc_type = %s, Updation_timestamp = %s 
+    SET doc_name = %s, doc_type = %s, lastupdated_timestamp = %s 
     WHERE doc_id = %s
 """
 
 DELETE_DOCUMENT = "DELETE FROM Document WHERE doc_id = %s"
 
 INSERT_DOCUMENT_TO_PROGRAM = """
-    INSERT INTO Document_to_program (doc_id, program_id, Creation_timestamp, Updation_timestamp) 
+    INSERT INTO document_to_program (doc_id, program_id, created_timestamp, lastupdated_timestamp) 
     VALUES (%s, %s, %s, %s)
 """
 
 SELECT_DOCUMENTS_BY_PROGRAM = """
-    SELECT d.* FROM Document d
-    JOIN Document_to_program dp ON d.doc_id = dp.doc_id
+    SELECT d.* FROM document d
+    JOIN document_to_program dp ON d.doc_id = dp.doc_id
     WHERE dp.program_id = %s
 """
