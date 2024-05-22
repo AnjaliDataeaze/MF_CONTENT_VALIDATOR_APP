@@ -5,6 +5,7 @@ from src.manager.rules import Rules
 from datetime import datetime
 from src.config.queries import INSERT_DISCLAIMER, SELECT_DISCLAIMERS, UPDATE_DISCLAIMER, DELETE_DISCLAIMER
 from src.config.credentials import db_config
+
 try:
         db = mysql.connector.connect(**db_config)
         cursor = db.cursor()
