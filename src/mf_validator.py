@@ -5,6 +5,7 @@ from src.manager.program import Program
 from src.manager.rules import Rules
 from src.manager.disclaimer import Disclaimer
 
+# class validator:
 def add_program(name, description):
     program = Program(name, description)
     return program.add_program()
@@ -55,11 +56,11 @@ def delete_disclaimer(disclaimer_id):
 
 
 
-if __name__ == "__main__":
-    print(add_program("Python", "A high-level programming language"))
-    print(add_program("Java", "An object-oriented programming language"))
-    print(list_programs())
-    print(edit_program("Java", "Java", "A widely-used programming language"))
-    print(list_programs())
-    print(delete_program("Python"))
-    print(list_programs())
+# if __name__ == "__main__":
+#     print(add_program("Python", "A high-level programming language"))
+#     print(add_program("Java", "An object-oriented programming language"))
+#     print(list_programs())
+#     print(edit_program("Java", "Java", "A widely-used programming language"))
+#     print(list_programs())
+#     print(delete_program("Python"))
+#     print(list_programs())
