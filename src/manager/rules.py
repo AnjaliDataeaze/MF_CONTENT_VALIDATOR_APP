@@ -1,15 +1,17 @@
 # manager/rules.py
-import mysql.connector
+import psycopg2
 from src.manager.program import Program
 from datetime import datetime
 from src.config.queries import INSERT_RULE, SELECT_RULES, UPDATE_RULE, DELETE_RULE, INSERT_RULE_TO_PROGRAM, SELECT_RULES_BY_PROGRAM
 from src.config.credentials import db_config
+
 try:
-        db = mysql.connector.connect(**db_config)
-        cursor = db.cursor()
-except mysql.connector.Error as err:
-        print(f"Error: {err}")
-        exit()
+    conn = psycopg2.connect(**db_config)
+    cursor = conn.cursor()
+except Exception as error:
+    print(f"Error connecting to PostgreSQL: {error}")
+    exit()
+
 
 # class Rules(Program):
 class Rules:
@@ -24,57 +26,70 @@ class Rules:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             values = (self.rulename, self.media_type, self.description, now, now)
             cursor.execute(INSERT_RULE, values)
-            rule_id = cursor.lastrowid
-            db.commit()
+            # rule_id = cursor.lastrowid
+            # rule_id = rule_id + 1
+            conn.commit()
             if self.program_id:
-                self.add_rule_to_program(rule_id, self.program_id)
-            return "Rule added successfully!"
-        except mysql.connector.Error as err:
-            return f"Error: {err}"
+                cursor.execute(f"select id from rules where rulename = '{self.rulename}' and media_type='{self.media_type}' and created_timestamp='{now}'")
+                row = cursor.fetchone()
+                print(row)
+                rule_id = row[0]
+                val = self.add_rule_to_program(rule_id, self.program_id)
+                if val ==1:
+                    return 1
+                else:
+                    return val
+        except Exception as error:
+            return f"Error connecting to PostgreSQL: {error}"
 
     @staticmethod
     def list_rules():
         try:
             cursor.execute(SELECT_RULES)
             rules = cursor.fetchall()
-            print(rules)
-            return rules
-        except mysql.connector.Error as err:
-            return f"Error: {err}"
+            return 1, rules
+        except Exception as error:
+            return 2, f"Error connecting to PostgreSQL: {error}"
 
     def edit_rule(self, rule_id, new_rulename, new_media_type, new_description):
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             values = (new_rulename, new_media_type, new_description, now, rule_id)
             cursor.execute(UPDATE_RULE, values)
-            db.commit()
-            return "Rule updated successfully!"
-        except mysql.connector.Error as err:
-            return f"Error: {err}"
+            conn.commit()
+            # return "Rule updated successfully!"
+            return 1
+        except Exception as error:
+            return f"Error : {error}"
 
     def delete_rule(self, rule_id):
         try:
             cursor.execute(DELETE_RULE, (rule_id,))
-            db.commit()
-            return "Rule deleted successfully!"
-        except mysql.connector.Error as err:
-            return f"Error: {err}"
+            conn.commit()
+            # return "Rule deleted successfully!"
+            return 1
+        except Exception as error:
+            return f"Error : {error}"
 
     def add_rule_to_program(self, rule_id, program_id):
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             values = (program_id, rule_id, now, now)
+            print("calling add rule to program")
+            print(f"values-->{values}")
             cursor.execute(INSERT_RULE_TO_PROGRAM, values)
-            db.commit()
-            return "Rule linked to program successfully!"
-        except mysql.connector.Error as err:
-            return f"Error: {err}"
+            conn.commit()
+            print("SUccessful")
+            # return "Rule linked to program successfully!"
+            return 1
+        except Exception as error:
+            return f"Error : {error}"
 
     @staticmethod
     def list_rules_by_program(program_id):
         try:
             cursor.execute(SELECT_RULES_BY_PROGRAM, (program_id,))
             rules = cursor.fetchall()
-            return rules
-        except mysql.connector.Error as err:
-            return f"Error: {err}"
+            return 1, rules
+        except Exception as error:
+            return 2,f"Error : {error}"
