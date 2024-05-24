@@ -4,7 +4,8 @@
 from src.manager.program import Program
 from src.manager.rules import Rules
 from src.manager.disclaimer import Disclaimer
-
+from src.manager.validation import AnalyzeDocumet
+from src.config.prompts import PROMPT, QUESTIONS
 # class validator:
 def add_program(name, description):
     program = Program(name, description)
@@ -20,6 +21,8 @@ def edit_program(program_id, name, description):
 def delete_program(program_id):
     program = Program("", "")
     return program.delete_program(program_id)
+
+# ------------------------------------------------------------#
 
 def add_rule(rulename, media_type, description, program_id):
     rule = Rules(rulename, media_type, description, program_id)
@@ -39,6 +42,8 @@ def delete_rule(rule_id):
 def list_rules_by_program(program_id):
     return Rules.list_rules_by_program(program_id)
 
+# ------------------------------------------------------------#
+
 def add_disclaimer(name_of_disclaimer, rule_id, actual_disclaimer):
     disclaimer = Disclaimer(name_of_disclaimer, rule_id, actual_disclaimer)
     return disclaimer.add_disclaimer()
@@ -54,8 +59,20 @@ def delete_disclaimer(disclaimer_id):
     disclaimer = Disclaimer("", "", "")
     return disclaimer.delete_disclaimer(disclaimer_id)
 
+# --------------------------- Validation ---------------------------------------- #
 
-
+def validation(file_path):
+    Analyzer = AnalyzeDocumet()
+    value, image_text = Analyzer.analyze_document(file_path=file_path)
+    if value==1:
+       value2, response = Analyzer.extract_value(document_text=image_text, prompt=PROMPT, questions= QUESTIONS)
+       if value2==1:
+           return 1, response
+       else:
+           return 2, value2
+    else:
+        return 2, image_text
+ 
 # if __name__ == "__main__":
 #     print(add_program("Python", "A high-level programming language"))
 #     print(add_program("Java", "An object-oriented programming language"))
