@@ -52,24 +52,24 @@ INSERT_RULE_TO_PROGRAM = """
 
 SELECT_RULES_BY_PROGRAM = """
     SELECT r.* FROM rules r
-    JOIN Rule_to_program rp ON r.id = rp.rules_id
+    JOIN rule_to_program rp ON r.id = rp.rules_id
     WHERE rp.program_id = %s
 """
 
 INSERT_DOCUMENT = """
-    INSERT INTO Document (doc_name, doc_type, created_timestamp, lastupdated_timestamp) 
+    INSERT INTO document (doc_name, doc_type, created_timestamp, lastupdated_timestamp) 
     VALUES (%s, %s, %s, %s)
 """
 
-SELECT_DOCUMENTS = "SELECT * FROM Document"
+SELECT_DOCUMENTS = "SELECT * FROM document"
 
 UPDATE_DOCUMENT = """
-    UPDATE Document 
+    UPDATE document 
     SET doc_name = %s, doc_type = %s, lastupdated_timestamp = %s 
     WHERE doc_id = %s
 """
 
-DELETE_DOCUMENT = "DELETE FROM Document WHERE doc_id = %s"
+DELETE_DOCUMENT = "DELETE FROM document WHERE doc_id = %s"
 
 INSERT_DOCUMENT_TO_PROGRAM = """
     INSERT INTO document_to_program (doc_id, program_id, created_timestamp, lastupdated_timestamp) 
