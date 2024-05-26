@@ -58,3 +58,8 @@ class Disclaimer(Rules):
         except Exception as error:
             return f"Error : {error}"
 
+    
+    if cursor:
+        cursor.close()
+    if conn:
+        conn.close()

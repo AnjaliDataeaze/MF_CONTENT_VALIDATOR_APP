@@ -26,8 +26,6 @@ class Rules:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             values = (self.rulename, self.media_type, self.description, now, now)
             cursor.execute(INSERT_RULE, values)
-            # rule_id = cursor.lastrowid
-            # rule_id = rule_id + 1
             conn.commit()
             if self.program_id:
                 cursor.execute(f"select id from rules where rulename = '{self.rulename}' and media_type='{self.media_type}' and created_timestamp='{now}'")
@@ -75,11 +73,8 @@ class Rules:
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             values = (program_id, rule_id, now, now)
-            print("calling add rule to program")
-            print(f"values-->{values}")
             cursor.execute(INSERT_RULE_TO_PROGRAM, values)
             conn.commit()
-            print("SUccessful")
             # return "Rule linked to program successfully!"
             return 1
         except Exception as error:
@@ -93,3 +88,8 @@ class Rules:
             return 1, rules
         except Exception as error:
             return 2,f"Error : {error}"
+
+    if cursor:
+        cursor.close()
+    if conn:
+        conn.close()

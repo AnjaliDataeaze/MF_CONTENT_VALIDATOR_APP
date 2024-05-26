@@ -59,5 +59,8 @@ class Program:
             return 2,f"Error : {error}"
 
 
-
+    if cursor:
+        cursor.close()
+    if conn:
+        conn.close()
 
