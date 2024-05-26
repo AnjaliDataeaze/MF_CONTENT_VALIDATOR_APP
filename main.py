@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from src import mf_validator
+import json
+import re
 app = FastAPI()
 
 
@@ -140,8 +142,17 @@ def delete_disclaimer(disclaimer_id):
 
 @app.get("/validation")
 def validation(file_path):
-    value, response = mf_validator.validation(file_path=file_path)
-    if value==1:
-        return {"status":"SUCCESS","data":response}
+    print(f"file_path-->{file_path}")
+    value, response = mf_validator.validation(file_path)
+    json_string = list(response)[0]
+    json_match = re.search(r'{.*?}', json_string, re.DOTALL)
+    if value ==1:
+        if json_match:
+            json_string = json_match.group()
+            data = json.loads(json_string)
+            return {"status":"SUCCESS","data":data}
     else:
         return {"status":"FAILED","data":response}
+
+     
+    
