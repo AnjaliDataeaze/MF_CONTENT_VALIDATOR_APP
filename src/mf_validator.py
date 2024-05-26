@@ -4,7 +4,7 @@
 from src.manager.program import Program
 from src.manager.rules import Rules
 from src.manager.disclaimer import Disclaimer
-from src.manager.validation import AnalyzeDocumet
+from src.manager.validation import AnalyzeDocument
 from src.config.prompts import PROMPT, QUESTIONS
 # class validator:
 def add_program(name, description):
@@ -62,16 +62,17 @@ def delete_disclaimer(disclaimer_id):
 # --------------------------- Validation ---------------------------------------- #
 
 def validation(file_path):
-    Analyzer = AnalyzeDocumet()
-    value, image_text = Analyzer.analyze_document(file_path=file_path)
-    if value==1:
-       value2, response = Analyzer.extract_value(document_text=image_text, prompt=PROMPT, questions= QUESTIONS)
+    Analyzer = AnalyzeDocument()
+    value, text = Analyzer.analyze_document(file_path=file_path)
+    print(f"value-->{value}")
+    if value == 1:
+       value2, response = Analyzer.extract_value(text, PROMPT)
        if value2==1:
            return 1, response
        else:
-           return 2, value2
+           return 2, response
     else:
-        return 2, image_text
+        return 2, text
  
 # if __name__ == "__main__":
 #     print(add_program("Python", "A high-level programming language"))
