@@ -4,7 +4,7 @@
 from src.manager.program import Program
 from src.manager.rules import Rules
 from src.manager.disclaimer import Disclaimer
-from src.manager.validation import AnalyzeDocument
+from src.manager.validation import AnalyzeDocumet
 from src.config.prompts import PROMPT, QUESTIONS
 # class validator:
 def add_program(name, description):
@@ -18,25 +18,34 @@ def edit_program(program_id, name, description):
     program = Program("", "")
     return program.edit_program(program_id, name, description)
 
+
 def delete_program(program_id):
     program = Program("", "")
     return program.delete_program(program_id)
 
 # ------------------------------------------------------------#
 
-def add_rule(rulename, media_type, description, program_id):
-    rule = Rules(rulename, media_type, description, program_id)
+# def add_rule(rulename, media_type, description, program_id):
+#     rule = Rules(rulename, media_type, description, program_id)
+#     return rule.add_rule()
+def add_rule(rulename, media_type, description, program_type, disclaimer):
+    rule = Rules(rulename, media_type, description, program_type, disclaimer)
     return rule.add_rule()
+
+
 
 def list_rules():
     return Rules.list_rules()
 
-def edit_rule(rule_id, rulename, media_type, description):
-    rule = Rules("", "", "", "")
-    return rule.edit_rule(rule_id, rulename, media_type, description)
+def edit_rule(rulename, description, disclaimer, rule_id):
+    rule = Rules("", "", "", "", "")
+    return rule.edit_rule(rulename, description, disclaimer, rule_id)
+
+
+
 
 def delete_rule(rule_id):
-    rule = Rules("", "", "", "")
+    rule = Rules("","", "", "", "")
     return rule.delete_rule(rule_id)
 
 def list_rules_by_program(program_id):
@@ -62,17 +71,16 @@ def delete_disclaimer(disclaimer_id):
 # --------------------------- Validation ---------------------------------------- #
 
 def validation(file_path):
-    Analyzer = AnalyzeDocument()
-    value, text = Analyzer.analyze_document(file_path=file_path)
-    print(f"value-->{value}")
-    if value == 1:
-       value2, response = Analyzer.extract_value(text, PROMPT)
+    Analyzer = AnalyzeDocumet()
+    value, image_text = Analyzer.analyze_document(file_path=file_path)
+    if value==1:
+       value2, response = Analyzer.extract_value(document_text=image_text, prompt=PROMPT, questions= QUESTIONS)
        if value2==1:
            return 1, response
        else:
-           return 2, response
+           return 2, value2
     else:
-        return 2, text
+        return 2, image_text
  
 # if __name__ == "__main__":
 #     print(add_program("Python", "A high-level programming language"))
