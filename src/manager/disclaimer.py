@@ -57,4 +57,3 @@ class Disclaimer(Rules):
             return 1
         except Exception as error:
             return f"Error : {error}"
-

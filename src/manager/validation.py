@@ -15,9 +15,9 @@ credential = AzureKeyCredential(endpoint_key)
 document_analysis_client = DocumentAnalysisClient(endpoint, credential)
 
 
-class AnalyzeDocumet():
-    def __init__(self) -> None:
-        pass
+class AnalyzeDocument():
+    # def __init__(self) -> None:
+    #     pass
 
     def analyze_document(self,file_path):
         try:
@@ -32,16 +32,16 @@ class AnalyzeDocumet():
                 for line in page.lines:
                     text_data.append(line.content)
             document_text = ', '.join(text_data)
+            print("DONE with text extracting")
             return 1, document_text
         except Exception as e:
             return 2, f"Error: {e}"
 
 
-    def extract_value(self,document_text, prompt, questions):
+    def extract_value(self, document_text, prompt):
         document_text_str = json.dumps(document_text)
         prompt_str = json.dumps(prompt)
-        questions_str = json.dumps(questions)
-        content = document_text_str + "\n" + questions_str + "\n" + prompt_str
+        content = document_text_str + "\n" + prompt_str
         user_message = {
             "role": "user",
             "content": content
@@ -58,15 +58,10 @@ class AnalyzeDocumet():
                 messages=conversation
             )
 
-            responses = {questions[i]: choice.message.content for i, choice in enumerate(response.choices)}
-            split_response = responses['S'].split('\n')
-            formatted_response = {}
-            for item in split_response:
-                key, value = item.split(':')
-                key = key.strip()
-                value = value.strip()
-                formatted_response[key] = value
-            return 1, formatted_response
+            responses = {choice.message.content for i, choice in enumerate(response.choices)}
+        
+            return 1, responses
         except Exception as e:
-            return f"An error occurred: {e}"
+            return 2, f"An error occurred: {e}"
             
+    
