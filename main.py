@@ -1,210 +1,154 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from src import mf_validator
-import psycopg2
-app = FastAPI()
+from pydantic import BaseModel
+
 print("Working")
+app = FastAPI()
 
-
-# Configure CORS
-origins = [
-    "http://localhost:3000",  # React development server
-    "http://127.0.0.1:3000",  # React development server (alternative)
-]
-
+# CORS configuration
+origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Allow specific origins
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
+# Program Models
+class AddProgram(BaseModel):
+    name: str
+    description: str
 
-#####################################################
+class DeleteProgram(BaseModel):
+    program_id: int
 
+class EditProgram(BaseModel):
+    id: int
+    name: str
+    description: str
+
+# Rule Models
+class AddRule(BaseModel):
+    rulename: str
+    media_type: str
+    description: str
+    program_type: str
+    disclaimer: str
+
+class EditRule(BaseModel):
+    rule_id : int
+    rulename: str
+    description: str
+    disclaimer: str
+
+class DeleteRule(BaseModel):
+    rule_id: int
+
+class ListRulesByProgram(BaseModel):
+    program_id: int
+
+# Disclaimer Models
+
+class AddDisclaimer(BaseModel):
+    rule_id: int
+    actual_disclaimer: str
+
+class EditDisclaimer(BaseModel):
+    disclaimer_id: int
+    rule_id: int
+    actual_disclaimer: str
+
+class DeleteDisclaimer(BaseModel):
+    disclaimer_id: int
+
+# Validation Models
+
+class Validation(BaseModel):
+    file_path: str
+
+
+# Video Transcrition Models
+
+class VideoTranscrition(BaseModel):
+    video_path: str
+
+# Program Endpoints
 @app.get("/list_programs")
 def list_programs():
     value, data = mf_validator.list_programs()
-    if value == 1:
-        # print("data",data)
-        # print({"status": "SUCCESS", "data": data})
-        return {"status": "SUCCESS", "data": data}
-    else:
-        return {"status": "FAILED", "data": data}
+    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
 
-  
 @app.post("/add_program")
-async def add_program(request: Request):
-    body = await request.json()
-    name = body.get('name')
-    description = body.get('description')
-    value = mf_validator.add_program(name, description)
-    if value == 1:
-        return {"status": "SUCCESS", "data": "Program added successfully !!!"}
-    else:
-        return {"status": "FAILED", "data": value}
+async def add_program(program: AddProgram):
+    value = mf_validator.add_program(program.name, program.description)
+    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": "Program added successfully !!!" if value == 1 else value}
 
+@app.post("/edit_program")
+async def edit_program(program: EditProgram):
+    value = mf_validator.edit_program(program.id, program.name, program.description)
+    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": "Program edited successfully !!!" if value == 1 else value}
 
+@app.delete("/delete_program")
+def delete_program(program: DeleteProgram):
+    value = mf_validator.delete_program(program.program_id)
+    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": "Program deleted successfully !!!" if value == 1 else value}
 
-# @app.get("/edit_program")
-# def edit_program(program_id, new_name, new_description):
-#     value = mf_validator.edit_program(program_id, new_name, new_description)
-#     if value ==1:
-#         return {"status":"SUCCESS","data":"Program Updated successfully !!!"}
-#     else:
-#         return {"status":"FAILED","data":value}
-
-@app.post("/edit_program/{program_id}")
-async def edit_program(program_id: int, request: Request):
-    body = await request.json()
-    name = body.get('name')
-    description = body.get('description')
-    value = mf_validator.edit_program(program_id, name, description)
-    if value == 1:
-        return {"status": "SUCCESS", "data": "Program edited successfully !!!"}
-    else:
-        return {"status": "FAILED", "data": value}
-
-    
-
-
-@app.get("/delete_program")
-async def delete_program(program_id: int):
-    value = mf_validator.delete_program(program_id=program_id)
-    if value == 1:
-        return {"status": "SUCCESS", "data": "Program deleted successfully !!!"}
-    else:
-        return {"status": "FAILED", "data": value}
-    
-
-######################################### API FOR RULE ####################################################
- 
-
+# Rule Endpoints
 @app.get("/list_rules")
 def list_rules():
     value, data = mf_validator.list_rules()
-    if value==1:
-        return {"status":"SUCCESS","data":data}
-    else:
-        return {"status":"FAILED","data":data}
+    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
 
-@app.get("/list_rules_by_program")
-
-def list_rules_by_program():
-    value, data = mf_validator.list_rules_by_program()
-    if value==1:
-        return {"status":"SUCCESS","data":data}
-    else:
-        return {"status":"FAILED","data":data}
-
-#commented by me
-# @app.get("/add_rule")
-# def add_rule(rulename, media_type, description, program_id):
-#     print(f"rulename", rulename)
-#     print(f"program_id", program_id)
-#     value = mf_validator.add_rule(rulename, media_type, description, program_id)
-
-#     if value==1:
-#        return {"status":"SUCCESS","data":"Rule added successfully !!!"}
-#     else:
-#         return {"status":"FAILED","data":value}
+@app.post("/list_rules_by_program")
+def list_rules_by_program(rule: ListRulesByProgram):
+    value, data = mf_validator.list_rules_by_program(rule.program_id)
+    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
 
 @app.post("/add_rule")
-async def add_rule(request: Request):
-    body = await request.json()
-    rulename = body.get('rulename')
-    media_type = body.get('media_type')
-    description = body.get('description')
-    program_type = body.get('program_type')
-    disclaimer = body.get('disclaimer')
-    print("body is****************************************************************", body)
-    value = mf_validator.add_rule(rulename, media_type, description, program_type, disclaimer)
-    if value == 1:
-        return {"status": "SUCCESS", "data": "Rule added successfully !!!"}
-    else:
-        return {"status": "FAILED", "data": value}
-    
-# @app.get("/add_rule_to_program")
-# def add_rule_to_program(rule_id, program_id):
-#     value = mf_validator.add_rule_to_program(rule_id, program_id)
-#     if value==1:
-#        return {"status":"SUCCESS","data":"Rule added to program successfully !!!"}
-#     else:
-#         return {"status":"FAILED","data":value}
+async def add_rule(rule: AddRule):
+    value = mf_validator.add_rule(rule.rulename, rule.media_type, rule.description, rule.program_type, rule.disclaimer)
+    return {"status": "SUCCESS" if value == 1 
+            else "FAILED", "data": "Rule added successfully !!!" if value == 1 else value}
+
+@app.post("/edit_rule")
+async def edit_rule(rule: EditRule):
+    value = mf_validator.edit_rule(rule.rule_id, rule.rulename, rule.description, rule.disclaimer)
+    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": "Rule updated successfully !!!" if value == 1 else value}
+
+@app.delete("/delete_rule")
+def delete_rule(rule : DeleteRule):
+    value = mf_validator.delete_rule(rule.rule_id)
+    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": "Rule deleted successfully !!!" if value == 1 else value}
+
+# Disclaimer Endpoints
+
+@app.post("/add_disclaimer")
+async def add_disclaimer(disclaimer: AddDisclaimer):
+    value = mf_validator.add_disclaimer(disclaimer.rule_id, disclaimer.actual_disclaimer)
+    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": "Disclaimer added successfully !!!" if value == 1 else value}
+
+@app.post("/edit_disclaimer")
+async def edit_disclaimer(disclaimer: EditDisclaimer):
+    value = mf_validator.edit_disclaimer(disclaimer.disclaimer_id, disclaimer.rule_id, disclaimer.actual_disclaimer)
+    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": "Disclaimer updated successfully !!!" if value == 1 else value}
+
+@app.delete("/delete_disclaimer")
+def delete_disclaimer(disclaimer: DeleteDisclaimer):
+    value = mf_validator.delete_disclaimer(disclaimer.disclaimer_id)
+    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": "Disclaimer deleted successfully !!!" if value == 1 else value}
+
+# Validation Endpoint
+@app.post("/validation")
+def validation(validation: Validation):
+    value, response = mf_validator.validation(validation.file_path)
+    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
 
 
-# @app.get("/edit_rule")
-# def edit_rule(rule_id, rulename, media_type, description):
-#     value = mf_validator.edit_rule(rule_id, rulename, media_type, description)
-#     if value==1:
-#         return {"status":"SUCCESS","data":"Rule Updated successfully !!!"}
-#     else:
-#         return {"status":"FAILED","data":value}
-
-@app.post("/edit_rule/{rule_id}")
-async def edit_rule(rule_id: int, request: Request):
-    body = await request.json()
-    rulename = body.get('rulename')
-    description = body.get('description')
-    disclaimer = body.get('disclaimer')
-    print("ALL Values: ", rulename, description, disclaimer, rule_id)
-    value = mf_validator.edit_rule(rulename, description, disclaimer, rule_id)
-    if value == 1:
-        return {"status": "SUCCESS", "data": "Rule updated successfully !!!"}
-    else:
-        return {"status": "FAILED", "data": value}
-    
-    
-@app.get("/delete_rule/{rule_id}")
-def delete_rule(rule_id: int):
-    value = mf_validator.delete_rule(rule_id)
-    if value == 1:
-        return {"status": "SUCCESS", "data": "Rule deleted successfully !!!"}
-    else:
-        return {"status": "FAILED", "data": value}
-
-###################################### API FOR DISCLAIMER ##################################################
-
-@app.get("/list_disclaimer")
-def list_disclaimers():
-    value , data= mf_validator.list_disclaimers()
-    if value ==1:
-        return {"status":"SUCCESS","data":value}
-    else:
-        return {"status":"FAILED","data":value}
-
-@app.get("/add_disclaimer")
-def add_disclaimer(name_of_disclaimer, rule_id, actual_disclaimer):
-    value = mf_validator.add_disclaimer(name_of_disclaimer, rule_id, actual_disclaimer)
-    if value ==1:
-        return {"status":"SUCCESS","data":"Discliamer added successfully !!!"}
-    else:
-        return {"status":"FAILED","data":value}
-    
-@app.get("/edit_disclaimer")
-def edit_disclaimer(disclaimer_id, rule_id, actual_disclaimer):
-    value = mf_validator.edit_rule(disclaimer_id, rule_id, actual_disclaimer)
-    if value ==1:
-        return {"status":"SUCCESS","data":"Disclaimer Updated successfully !!!"}
-    else:
-        return {"status":"FAILED","data":value}
-    
-
-@app.get("/delete_disclaimer")
-def delete_disclaimer(disclaimer_id):
-    value = mf_validator.delete_rule(disclaimer_id)
-    if value==1:
-        return {"status":"SUCCESS","data":"Disclaimer deleted successfully !!!"}
-    else:
-        return {"status":"FAILED","data":value}
-
-########################### VALIDATION #############################
-
-@app.get("/validation")
-def validation(file_path):
-    value, response = mf_validator.validation(file_path=file_path)
-    if value==1:
-        return {"status":"SUCCESS","data":response}
-    else:
-        return {"status":"FAILED","data":response}
+# Video Transcription Endpoint
+@app.post("/video_discliamer")
+def video_discliamer(videotranscrition: VideoTranscrition):
+    print("calling videodisclaimer")
+    value, data = mf_validator.transcript(videotranscrition.video_path)
+    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
