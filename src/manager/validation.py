@@ -16,8 +16,7 @@ document_analysis_client = DocumentAnalysisClient(endpoint, credential)
 
 
 class AnalyzeDocument():
-    # def __init__(self) -> None:
-    #     pass
+    
 
     def analyze_document(self,file_path):
         try:
