@@ -34,9 +34,9 @@ def add_rule(rulename, media_type, description, program_type, disclaimer):
 def list_rules():
     return Rules.list_rules()
 
-def edit_rule(rulename, description, disclaimer, rule_id):
+def edit_rule(rule_id, rulename, description, disclaimer):
     rule = Rules("", "", "", "", "")
-    return rule.edit_rule(rulename, description, disclaimer, rule_id)
+    return rule.edit_rule(rule_id, rulename, description, disclaimer)
 
 def delete_rule(rule_id):
     rule = Rules("","", "", "", "")
