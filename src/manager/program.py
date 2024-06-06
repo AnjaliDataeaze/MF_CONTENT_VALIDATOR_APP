@@ -69,10 +69,12 @@ class Program:
         try:
             cursor.execute(RULE_ID_RULE_TO_PROGRAM,(program_id,)) #fetch ruleids from rule_to_program
             rule_ids = tuple(cursor.fetchall())
+            print("++++++++++++++++++++++++++")
+            print(rule_ids)
             if rule_ids:
                 rule_ids_flat = tuple(rule_id[0] for rule_id in rule_ids)
-            cursor.execute(DELETE_RULENAMES,(rule_ids_flat)) #delete from rules 
-            cursor.execute(DELETE_PROGRAM_TO_RULE,(program_id)) #delete from rule_to_program
+                cursor.execute(DELETE_RULENAMES,(rule_ids_flat)) #delete from rules 
+                cursor.execute(DELETE_PROGRAM_TO_RULE,(program_id)) #delete from rule_to_program
             
             cursor.execute(DELETE_PROGRAM, (program_id,)) # delete from program
             
