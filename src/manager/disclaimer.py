@@ -12,19 +12,18 @@ except Exception as error:
     print(f"Error connecting to PostgreSQL: {error}")
     exit()
 
-class Disclaimer(Rules):
-    def __init__(self, name_of_disclaimer, rule_id, actual_disclaimer):
-        self.name_of_disclaimer = name_of_disclaimer
-        self.rule_id = rule_id
-        self.actual_disclaimer = actual_disclaimer
+class Disclaimer:
+    # def __init__(self, name_of_disclaimer, rule_id, actual_disclaimer):
+    #     self.name_of_disclaimer = name_of_disclaimer
+    #     self.rule_id = rule_id
+    #     self.actual_disclaimer = actual_disclaimer
 
-    def add_disclaimer(self):
+    def add_disclaimer(self, rule_id, actual_disclaimer):
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            values = (self.rule_id, self.actual_disclaimer, now, now)
+            values = (rule_id, actual_disclaimer, now, now)
             cursor.execute(INSERT_DISCLAIMER, values)
             conn.commit()
-            # return "Disclaimer added successfully!"
             return 1
         except Exception as error:
             return f"Error : {error}"
