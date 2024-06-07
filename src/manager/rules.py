@@ -5,7 +5,10 @@ from datetime import datetime
 from src.config.queries import INSERT_RULE, SELECT_RULES, UPDATE_RULE, DELETE_RULE, INSERT_RULE_TO_PROGRAM, SELECT_RULES_BY_PROGRAM, PROGRAM_ID, RULE_ID,DELETE_RULE_TO_PROGRAM
 from src.config.credentials import db_config
 
+
+print(db_config)
 try:
+    print("&&&&&&&&&&&&&&&&&&")
     conn = psycopg2.connect(**db_config)
     cursor = conn.cursor()
 except Exception as error:
@@ -26,8 +29,11 @@ class Rules:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             values = (self.rulename, self.media_type, self.description, self.disclaimer, now, now)
             cursor.execute(INSERT_RULE, values)
+
             cursor.execute(PROGRAM_ID, (self.program_type,)) 
-            program_id = cursor.fetchone()[0]
+            program_id = cursor.fetchone()
+            if program_id is None:
+                return "No program found"
             cursor.execute(RULE_ID, (self.rulename,))
             rule_id = cursor.fetchone()[0]
             values2 = (program_id, rule_id, now, now)
@@ -49,10 +55,11 @@ class Rules:
         except Exception as error:
             return 2, f"Error connecting to PostgreSQL: {error}"
 
-    def edit_rule(self, new_rulename, new_description, new_disclaimer, rule_id):
+    def edit_rule(self, rule_id, new_rulename, new_description, new_disclaimer ):
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             values = (new_rulename, new_description, new_disclaimer, now, rule_id)
+            print("values",values)
             cursor.execute(UPDATE_RULE, values)
             conn.commit()
             return 1
