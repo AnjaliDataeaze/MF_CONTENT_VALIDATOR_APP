@@ -2,7 +2,7 @@
 
 import psycopg2
 from datetime import datetime
-from src.config.queries import INSERT_PROGRAM, SELECT_PROGRAMS, UPDATE_PROGRAM, DELETE_PROGRAM, RULE_ID_RULE_TO_PROGRAM, DELETE_PROGRAM_TO_RULE,DELETE_RULENAMES
+from src.config.queries import INSERT_PROGRAM, SELECT_PROGRAMS, UPDATE_PROGRAM, DELETE_PROGRAM, RULE_ID_RULE_TO_PROGRAM, DELETE_PROGRAM_TO_RULE,DELETE_RULENAMES_1
 from src.config.credentials import db_config
 
 try:
@@ -38,20 +38,7 @@ class Program:
             # print("the fetched Data is: ",programs)
             return 1, programs
         except Exception as error:
-            return 2, f"Error: {error}"
-    
-
-    # def edit_program(self, program_id, new_name, new_description):
-    #     try:
-    #         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    #         values = (new_name, new_description, now, program_id)
-    #         cursor.execute(UPDATE_PROGRAM, values)
-    #         conn.commit()
-    #         # return "Program updated successfully!"
-    #         return 1
-    #     except Exception as error:
-    #         return 2,f"Error : {error}"
-        
+            return 2, f"Error: {error}" 
 
     def edit_program(self, program_id, name, description):
         try:
@@ -69,12 +56,11 @@ class Program:
         try:
             cursor.execute(RULE_ID_RULE_TO_PROGRAM,(program_id,)) #fetch ruleids from rule_to_program
             rule_ids = tuple(cursor.fetchall())
-            print("++++++++++++++++++++++++++")
-            print(rule_ids)
             if rule_ids:
                 rule_ids_flat = tuple(rule_id[0] for rule_id in rule_ids)
-                cursor.execute(DELETE_RULENAMES,(rule_ids_flat)) #delete from rules 
-                cursor.execute(DELETE_PROGRAM_TO_RULE,(program_id)) #delete from rule_to_program
+                cursor.execute(DELETE_PROGRAM_TO_RULE,(rule_ids_flat)) # delete from rulr_to_program
+                cursor.execute(DELETE_RULENAMES_1,(rule_ids_flat)) #delete from rules 
+                 #delete from rule_to_program
             
             cursor.execute(DELETE_PROGRAM, (program_id,)) # delete from program
             
