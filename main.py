@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from src import mf_validator
 from pydantic import BaseModel
 
+from fastapi import FastAPI, File, UploadFile, Form
+from fastapi.responses import JSONResponse
+import os
+import shutil
+
 print("Working")
 app = FastAPI()
 
@@ -66,7 +71,8 @@ class DeleteDisclaimer(BaseModel):
 # Validation Models
 
 class Validation(BaseModel):
-    file_path: str
+    program_type: str
+    media_type : str
 
 
 # Video Transcrition Models
@@ -139,16 +145,28 @@ def delete_disclaimer(disclaimer: DeleteDisclaimer):
     value = mf_validator.delete_disclaimer(disclaimer.disclaimer_id)
     return {"status": "SUCCESS" if value == 1 else "FAILED", "data": "Disclaimer deleted successfully !!!" if value == 1 else value}
 
-# Validation Endpoint
+
+
 @app.post("/validation")
-def validation(validation: Validation):
-    value, response = mf_validator.validation(validation.file_path)
-    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
+async def validation(file: UploadFile = File(...), program_type: str = Form(...), media_type: str = Form(...)):
+    try:
+        file_location = f"temp_files/{file.filename}"
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(file_location), exist_ok=True)
 
-
-# Video Transcription Endpoint
-@app.post("/video_discliamer")
-def video_discliamer(videotranscrition: VideoTranscrition):
-    print("calling videodisclaimer")
-    value, data = mf_validator.transcript(videotranscrition.video_path)
-    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
+        # Save the file to the specified location
+        with open(file_location, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        if media_type =="pdf":
+            value, response = mf_validator.validation(file_location, program_type, media_type)
+            os.remove(file_location)
+            return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
+        elif media_type == "Video":
+            value, data = mf_validator.transcript(file_location)
+            os.remove(file_location)
+            return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
+        # Delete the file after processing
+        
+    except Exception as e:
+        return {"status": "FAILED", "data": str(e)}
