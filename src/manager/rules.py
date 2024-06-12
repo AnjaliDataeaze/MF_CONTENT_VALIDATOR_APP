@@ -5,10 +5,7 @@ from datetime import datetime
 from src.config.queries import INSERT_RULE, SELECT_RULES, UPDATE_RULE, DELETE_RULE, INSERT_RULE_TO_PROGRAM, SELECT_RULES_BY_PROGRAM, PROGRAM_ID, RULE_ID,DELETE_RULE_TO_PROGRAM
 from src.config.credentials import db_config
 
-
-print(db_config)
 try:
-    print("&&&&&&&&&&&&&&&&&&")
     conn = psycopg2.connect(**db_config)
     cursor = conn.cursor()
 except Exception as error:
