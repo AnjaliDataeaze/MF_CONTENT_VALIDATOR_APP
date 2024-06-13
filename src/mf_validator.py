@@ -6,7 +6,7 @@ from src.manager.rules import Rules
 from src.manager.disclaimer import Disclaimer
 from src.manager.validation import AnalyzeDocument
 from src.config.prompts import PROMPT
-from src.manager.transcription import Final
+from src.manager.transcription import Transcrib
 # class validator:
 def add_program(name, description):
     program = Program(name, description)
@@ -79,7 +79,12 @@ def validation(file_path):
  
 # ------------------------  Transcript time ---------------------------# 
 
+# def transcript(input_video):
+#     time_difference = Final()
+#     value, time = time_difference.flow(input_video)
+#     return value, time
+
 def transcript(input_video):
-    time_difference = Final()
-    value, time = time_difference.flow(input_video)
+    time_difference = Transcrib()
+    value, time = time_difference.duration(input_video)
     return value, time
