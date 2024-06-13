@@ -151,7 +151,7 @@ def delete_disclaimer(disclaimer: DeleteDisclaimer):
 async def validation(file: UploadFile = File(...), program_type: str = Form(...), media_type: str = Form(...)):
     try:
         file_location = f"temp_files/{file.filename}"
-        # Ensure the directory exists
+        print(f"file_location-->{file_location}")
         os.makedirs(os.path.dirname(file_location), exist_ok=True)
 
         # Save the file to the specified location
@@ -163,10 +163,10 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
             os.remove(file_location)
             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
         elif media_type == "Video":
+            print("calling video transcription")
             value, data = mf_validator.transcript(file_location)
             os.remove(file_location)
             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
-        # Delete the file after processing
         
     except Exception as e:
         return {"status": "FAILED", "data": str(e)}
