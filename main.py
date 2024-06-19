@@ -147,11 +147,36 @@ def delete_disclaimer(disclaimer: DeleteDisclaimer):
 
 
 
+# @app.post("/validation")
+# async def validation(file: UploadFile = File(...), program_type: str = Form(...), media_type: str = Form(...)):
+#     try:
+#         file_location = f"temp_files/{file.filename}"
+#         print(f"file_location-->{file_location}")
+#         os.makedirs(os.path.dirname(file_location), exist_ok=True)
+
+#         # Save the file to the specified location
+#         with open(file_location, "wb") as buffer:
+#             shutil.copyfileobj(file.file, buffer)
+        
+#         if media_type =="pdf":
+#             value, response = mf_validator.validation(file_location, program_type)
+#             os.remove(file_location)
+#             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
+#         elif media_type == "Video":
+#             print("calling video transcription")
+#             value, data = mf_validator.transcript(file_location)
+#             os.remove(file_location)
+#             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
+        
+#     except Exception as e:
+#         return {"status": "FAILED", "data": str(e)}
+
+
 @app.post("/validation")
 async def validation(file: UploadFile = File(...), program_type: str = Form(...), media_type: str = Form(...)):
     try:
         file_location = f"temp_files/{file.filename}"
-        print(f"file_location-->{file_location}")
+        # Ensure the directory exists
         os.makedirs(os.path.dirname(file_location), exist_ok=True)
 
         # Save the file to the specified location
@@ -159,14 +184,16 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
             shutil.copyfileobj(file.file, buffer)
         
         if media_type =="pdf":
-            value, response = mf_validator.validation(file_location, program_type, media_type)
+            value, response = mf_validator.validation(file_location, program_type)
+            # list_2d = [inner for outer in response for inner in outer]
             os.remove(file_location)
             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
         elif media_type == "Video":
-            print("calling video transcription")
             value, data = mf_validator.transcript(file_location)
+            print("Data: ---------: ",data)
             os.remove(file_location)
             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
+        # Delete the file after processing
         
     except Exception as e:
         return {"status": "FAILED", "data": str(e)}

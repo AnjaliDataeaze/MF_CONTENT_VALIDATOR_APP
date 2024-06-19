@@ -1,136 +1,84 @@
-from azure.core.credentials import AzureKeyCredential
-from azure.ai.formrecognizer import DocumentAnalysisClient
-from openai import AzureOpenAI
-from src.config.credentials import endpoint, endpoint_key, api_key, api_version, azure_endpoint
+import boto3
 import json
-import psycopg2
-from src.config.credentials import db_config
-from src.config.queries import GET_PROGRAM_ID,GET_Rule_ID_ASSOCIATED_WITH_PROGRAM, GET_DECRIPTION_FOR_RULE_ID
-client = AzureOpenAI(
-    api_key=api_key,
-    api_version=api_version,
-    azure_endpoint=azure_endpoint
-)
+import logging
 
-credential = AzureKeyCredential(endpoint_key)
-document_analysis_client = DocumentAnalysisClient(endpoint, credential)
- 
+from botocore.exceptions import ClientError
+from src.config.credentials import aws_access_key_id, aws_secret_access_key, region_name
 
-try:
-    conn = psycopg2.connect(**db_config)
-    cursor = conn.cursor()
-except Exception as error:
-    print(f"Error connecting to PostgreSQL: {error}")
-    exit()
 
-    
-class AnalyzeDocument:
-    
-    def analyze_document(self, file_path):
-        try:
-            with open(file_path, "rb") as file:
-                document_data = file.read()
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
-            poller = document_analysis_client.begin_analyze_document("prebuilt-idDocument", document_data)
-            result = poller.result()
+class DzBedrock:
 
-            text_data = []
-            for page in result.pages:
-                for line in page.lines:
-                    text_data.append(line.content)
-            document_text = ', '.join(text_data)
-            print("DONE with text extracting")
-            return 1, document_text
-        except Exception as e:
-            return 2, f"Error: {e}"
+    def generate_message(self,bedrock_runtime, model_id, system_prompt, messages, max_tokens):
 
-    def fetch_rules_and_descriptions(self, program_name):
-        try:
-            with self.conn.cursor() as cursor:
-                # Get the program ID for the given program name
-                cursor.execute(GET_PROGRAM_ID, (program_name,))
-                program_id = cursor.fetchone()
-                if not program_id:
-                    return f"Error: Program '{program_name}' not found"
-                program_id = program_id[0]
-
-                # Get the rules IDs associated with the program
-                cursor.execute(GET_Rule_ID_ASSOCIATED_WITH_PROGRAM, (program_id,))
-                rule_ids = cursor.fetchall()
-                if not rule_ids:
-                    return f"Error: No rules found for program '{program_name}'"
-
-                # Get the descriptions for the rules IDs
-                rules_descriptions = []
-                for rule_id in rule_ids:
-                    cursor.execute(GET_DECRIPTION_FOR_RULE_ID, (rule_id,))
-                    rules_descriptions.extend(cursor.fetchall())
-
-            return rules_descriptions
-        except Exception as e:
-            return f"Error fetching rules and descriptions: {e}"
-
-    def generate_prompt(self, description):
-        prompt = f'''
-
-        Please analyze the provided document and return response each time a similar word is found.
-        Please give us only answers and answer in short, do not explain. 
-        The output in response will be key:value pair as follows. Note Start giving output from Product Riskometer directly do not add any word other than below in start or end of the response.
-        {description} : Yes/No
-        '''
-
+        body=json.dumps(
+            {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": max_tokens,
+                "system": system_prompt,
+                "messages": messages
+            }  
+        )  
         
-        return prompt
+        response = bedrock_runtime.invoke_model(body=body, modelId=model_id)
+        # response_body = json.loads(response.get('body').read())
+        response_body_str = response.get('body').read()
+        response_body = json.loads(response_body_str)
+        text_value = response_body['content'][0]['text']
 
-    def extract_value(self, document_text, prompt):
-        document_text_str = json.dumps(document_text)
-        prompt_str = json.dumps(prompt)
-        content = document_text_str + "\n" + prompt_str
-        user_message = {
-            "role": "user",
-            "content": content
-        }
+        return text_value
 
-        conversation = [
-            {"role": "system", "content": "Assistant is a large language model trained by OpenAI."},
-            user_message
-        ]
-
+    def generate_response(self,input_text):
+        """
+        Entrypoint for Anthropic Claude message example.
+        """
+        __aws_secret_access_key:str = aws_secret_access_key
+        __aws_access_key_id:str = aws_access_key_id
+        __region_name:str = region_name
         try:
-            response = client.chat.completions.create(
-                model="v-ai-turbo",
-                messages=conversation
-            )
 
-            responses = {choice.message.content for i, choice in enumerate(response.choices)}
+            bedrock_runtime = boto3.client(service_name='bedrock-runtime', aws_access_key_id=__aws_access_key_id, 
+                    aws_secret_access_key=__aws_secret_access_key,
+                    region_name=__region_name)
 
-            return 1, responses
-        except Exception as e:
-            return 2, f"An error occurred: {e}"
-        
-    
-    def process_document(self, file_path, program_name, media_type):
-        if media_type.lower() in ["pdf", "image"]:
-            status, document_text = self.analyze_document(file_path)
-            if status != 1:
-                return document_text  # Return the error message
+            model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
+            system_prompt = "Answer the question from given content."
+            max_tokens = 1000
 
-            rules_descriptions = self.fetch_rules_and_descriptions(program_name)
-            if isinstance(rules_descriptions, str):
-                return rules_descriptions  # Return the error message
+            # Prompt with user turn only.
+            user_message =  {"role": "user", "content": input_text}
+            messages = [user_message]
 
-            results = []
-            for rule_id, description in rules_descriptions:
-                prompt = self.generate_prompt(description)
-                print("-----------------------------------------")
-                print("----Prompt----------",prompt)
-                print("-----------------------------------------")
-                status, response = self.extract_value(document_text, prompt)
-                if status != 1:
-                    results.append(response)  # Append the error message
+            response = self.generate_message(bedrock_runtime, model_id, system_prompt, messages, max_tokens)
+            # print(json.dumps(response, indent=4))
+
+            single_string = response  # Use the response text directly
+
+            # Split the string by newline
+            items = single_string.split('\n')
+
+            formatted_response = {}
+            # Iterating through each item in split_response and extracting key-value pairs
+            for item in items:
+                if ':' in item:
+                    # Splitting each item by colon
+                    key, value = item.split(':', 1)  # Limit split to 1 to avoid issues with extra colons
+                    # Removing leading and trailing whitespaces from key and value
+                    key = key.strip()
+                    value = value.strip()
+                    # Storing key-value pair in formatted_response dictionary
+                    formatted_response[key] = value
                 else:
-                    results.append(response)
+                    print(f"Skipping item as it does not contain ':': {item}")
 
-            return results
-
-        return "Unsupported media type"
+            return formatted_response
+            # return response
+        
+        except ClientError as err:
+            message=err.response["Error"]["Message"]
+            logger.error("A client error occurred: %s", message)
+            print("A client error occured: " +
+                format(message))
+            return None
