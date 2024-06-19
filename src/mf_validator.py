@@ -1,11 +1,12 @@
 # mf_validator.py
-
-
 from src.manager.program import Program
 from src.manager.rules import Rules
 from src.manager.disclaimer import Disclaimer
-from src.manager.validation import AnalyzeDocument
+# from src.manager.validation import AnalyzeDocument
 from src.config.prompts import PROMPT
+# from src.manager.transcription import Final
+from src.manager.validation import DzBedrock
+from src.manager.extractText import ExtractText
 from src.manager.transcription import Transcrib
 # class validator:
 def add_program(name, description):
@@ -65,18 +66,19 @@ def delete_disclaimer(disclaimer_id):
 
 # --------------------------- Validation ---------------------------------------- #
 
-def validation(file_path):
-    Analyzer = AnalyzeDocument()
-    value, image_text = Analyzer.analyze_document(file_path=file_path)
-    if value==1:
-       value2, response = Analyzer.extract_value(document_text=image_text, prompt=PROMPT)
-       if value2==1:
-           return 1, response
-       else:
-           return 2, value2
-    else:
-        return 2, image_text
- 
+
+def validation(file_path, program_type):
+
+   
+    extract1 = ExtractText()
+    value, content = extract1.process_image_and_generate_response(file_path=file_path, program_type=program_type)
+    print(type(content))
+    analyzer = DzBedrock()
+    if value == 1:
+        results = analyzer.generate_response(input_text=content)
+        return 1, results
+
+
 # ------------------------  Transcript time ---------------------------# 
 
 # def transcript(input_video):

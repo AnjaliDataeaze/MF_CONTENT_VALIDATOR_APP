@@ -107,5 +107,5 @@ GET_Rule_ID_ASSOCIATED_WITH_PROGRAM = """
                 """
 
 GET_DECRIPTION_FOR_RULE_ID = """
-                    SELECT id, disclaimer FROM rules WHERE id = %s
+                    SELECT rulename, disclaimer FROM rules WHERE id = %s
                     """
