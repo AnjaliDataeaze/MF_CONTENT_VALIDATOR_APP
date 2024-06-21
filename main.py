@@ -2,25 +2,51 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from src import mf_validator
 from pydantic import BaseModel
-
+from fastapi.responses import HTMLResponse
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 import os
 import shutil
 
 print("Working")
 app = FastAPI()
+# app = FastAPI(__name__,
+#             static_folder='./Frontend/build',
+#             static_url_path='/')
 
 # CORS configuration
-origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+# origins = ["http://65.2.98.191:8000/", "http://localhost:3000", "http://65.2.98.191:8000/", "http://localhost:3000/", "http://65.2.98.191:3000", "http://127.0.0.1:3000", "http://127.0.0.1:8000"]
+# origins = ["http://65.2.98.191:8000/", "http://localhost:3000"]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type"]
 )
 
+# Serve static files
+app.mount("/static", StaticFiles(directory="build/static"), name="static")
+
+@app.get("/programtypes")
+async def chat():
+    return HTMLResponse(content=open("build/index.html").read())
+
+@app.get("/rules")
+async def chat1():
+    return HTMLResponse(content=open("build/index.html").read())
+@app.get("/validate-content")
+async def chat2():
+    return HTMLResponse(content=open("build/index.html").read())
+@app.get("/")
+async def root():
+
+    return HTMLResponse(content=open("build/index.html").read())
+    
+    
 # Program Models
 class AddProgram(BaseModel):
     name: str
@@ -30,7 +56,7 @@ class DeleteProgram(BaseModel):
     program_id: int
 
 class EditProgram(BaseModel):
-    id: int
+    program_id: int
     name: str
     description: str
 
@@ -93,7 +119,9 @@ async def add_program(program: AddProgram):
 
 @app.post("/edit_program")
 async def edit_program(program: EditProgram):
-    value = mf_validator.edit_program(program.id, program.name, program.description)
+
+    value = mf_validator.edit_program(program.program_id, program.name, program.description)
+
     return {"status": "SUCCESS" if value == 1 else "FAILED", "data": "Program edited successfully !!!" if value == 1 else value}
 
 @app.delete("/delete_program")
@@ -144,32 +172,6 @@ async def edit_disclaimer(disclaimer: EditDisclaimer):
 def delete_disclaimer(disclaimer: DeleteDisclaimer):
     value = mf_validator.delete_disclaimer(disclaimer.disclaimer_id)
     return {"status": "SUCCESS" if value == 1 else "FAILED", "data": "Disclaimer deleted successfully !!!" if value == 1 else value}
-
-
-
-# @app.post("/validation")
-# async def validation(file: UploadFile = File(...), program_type: str = Form(...), media_type: str = Form(...)):
-#     try:
-#         file_location = f"temp_files/{file.filename}"
-#         print(f"file_location-->{file_location}")
-#         os.makedirs(os.path.dirname(file_location), exist_ok=True)
-
-#         # Save the file to the specified location
-#         with open(file_location, "wb") as buffer:
-#             shutil.copyfileobj(file.file, buffer)
-        
-#         if media_type =="pdf":
-#             value, response = mf_validator.validation(file_location, program_type)
-#             os.remove(file_location)
-#             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
-#         elif media_type == "Video":
-#             print("calling video transcription")
-#             value, data = mf_validator.transcript(file_location)
-#             os.remove(file_location)
-#             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
-        
-#     except Exception as e:
-#         return {"status": "FAILED", "data": str(e)}
 
 
 @app.post("/validation")
