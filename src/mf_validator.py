@@ -3,10 +3,9 @@ from src.manager.program import Program
 from src.manager.rules import Rules
 from src.manager.disclaimer import Disclaimer
 # from src.manager.validation import AnalyzeDocument
-from src.config.prompts import PROMPT
+# from src.config.prompts import PROMPT
 # from src.manager.transcription import Final
-from src.manager.validation import DzBedrock
-from src.manager.extractText import ExtractText
+from src.manager.validation import ExtractText
 from src.manager.transcription import Transcrib
 # class validator:
 def add_program(name, description):
@@ -17,6 +16,7 @@ def list_programs():
     return Program.list_programs()
 
 def edit_program(program_id, name, description):
+
     program = Program("", "")
     return program.edit_program(program_id, name, description)
 
@@ -69,13 +69,9 @@ def delete_disclaimer(disclaimer_id):
 
 def validation(file_path, program_type):
 
-   
     extract1 = ExtractText()
-    value, content = extract1.process_image_and_generate_response(file_path=file_path, program_type=program_type)
-    print(type(content))
-    analyzer = DzBedrock()
+    value, results = extract1.process_image_and_generate_response(file_path=file_path, program_type=program_type)
     if value == 1:
-        results = analyzer.generate_response(input_text=content)
         return 1, results
 
 

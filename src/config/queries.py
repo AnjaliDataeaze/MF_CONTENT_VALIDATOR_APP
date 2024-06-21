@@ -109,3 +109,21 @@ GET_Rule_ID_ASSOCIATED_WITH_PROGRAM = """
 GET_DECRIPTION_FOR_RULE_ID = """
                     SELECT rulename, disclaimer FROM rules WHERE id = %s
                     """
+
+RETURN_OUTPUT = """
+                        SELECT rulename, rule, answer, output
+                        FROM output
+                        WHERE group_id = %s
+                        """
+
+CREATE_SEQUENCE_GROUP_ID = """
+                        CREATE SEQUENCE IF NOT EXISTS group_id_seq
+                        START 1;
+                    """
+
+NEXTVAL_GROUP_ID = "SELECT nextval('group_id_seq')"
+
+INSERT_OUTPUT = """
+                            INSERT INTO output (group_id, document_link, rulename, rule, answer, output, media_type)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            """
