@@ -92,8 +92,8 @@ async def auth(request: Request):
 
 
 class UserLogin(BaseModel):
-    name: str
-    description: str
+    email: str
+    password: str
 
 @app.post("/user-login")
 async def login(request: Request, logIn: UserLogin):
