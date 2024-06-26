@@ -123,7 +123,13 @@ CREATE_SEQUENCE_GROUP_ID = """
 
 NEXTVAL_GROUP_ID = "SELECT nextval('group_id_seq')"
 
-INSERT_OUTPUT = """
-                            INSERT INTO output (group_id, document_link, rulename, rule, answer, output, media_type)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s)
-                            """
+INSERT_OUTPUT = """ INSERT INTO output (group_id, document_link, rulename, rule, answer, output, media_type)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """
+
+## Queries for User Managememnt
+
+
+INSERT_USER = """ INSERT INTO users (username, password , email, first_name, last_name, phone_number, address)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """
