@@ -147,6 +147,10 @@ async def validate_content(request: Request, user=Depends(get_current_user)):
 async def root(request: Request, user=Depends(get_current_user)):
     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
+@app.get("/root")
+async def root(request: Request, user=Depends(get_current_user)):
+    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+
 
 
 if __name__ == '__main__':
