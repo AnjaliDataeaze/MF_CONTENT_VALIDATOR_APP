@@ -45,7 +45,7 @@ class User_Manager:
             return 2, f"Error : {error}"
              
 
-    def list_user():
+    def list_user(self):
         try:
             cursor.execute(LIST_USER)
             row= cursor.fetchall()
