@@ -130,6 +130,9 @@ INSERT_OUTPUT = """ INSERT INTO output (group_id, document_link, rulename, rule,
 ## Queries for User Managememnt
 
 
-INSERT_USER = """ INSERT INTO users (username, password , email, first_name, last_name, phone_number, address)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+INSERT_USER = """ INSERT INTO users (username, password , email, first_name, last_name, phone_number, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """
+SELECT_PASSWORD = """SELECT password FROM users WHERE email= %s """
+
+LIST_USER = "SELECT email FROM users "
