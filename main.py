@@ -93,9 +93,12 @@ async def auth(request: Request):
 #     return RedirectResponse(url='/home')
 '''
 
+
+
 class UserLogin(BaseModel):
     email: str
     password: str
+
 
 @app.post("/user-login")
 async def login(request: Request, logIn: UserLogin):
@@ -116,8 +119,6 @@ async def login(request: Request, logIn: UserLogin):
 @app.get('/logout')
 def logout(request: Request):
     login_method = request.session.get('login_method')
-    print("login_method-->",login_method)
-    print("Request_Session_of_Login", request.session)
     if login_method == 'google':
         if 'user' in request.session:
             request.session.pop('user')
@@ -130,13 +131,16 @@ def logout(request: Request):
     request.session.clear()            # Clear all other session data
     return RedirectResponse(url='/login')
 
+@app.get('/login')
+async def login(request: Request, logIn: UserLogin):
+    raise HTTPException(status_code=401, detail="User Not FOund")
+    
+user = get_current_user(request=Request)
 
-# user = get_current_user()
-
-# app.include_router(rule_endpoint.router)
-# app.include_router(program.router)
-# app.include_router(user_management.router)
-# app.include_router(validation.router)
+app.include_router(rule_endpoint.router)
+app.include_router(program.router)
+app.include_router(user_management.router)
+app.include_router(validation.router)
 
 
 app.mount("/static", StaticFiles(directory= BUILD_PATH + "/static"), name="static")
@@ -149,18 +153,6 @@ async def program_types(request: Request, user=Depends(get_current_user)):
     else:
         return RedirectResponse(url="/login", status_code=HTTP_302_FOUND)
 
-
-# @app.get("/programtypes")
-# async def program_types(request: Request):
-#     try:
-#         user = get_current_user(request)
-#     except HTTPException as e:
-#         print("E-Status code--->",e.status_code)
-#         if e.status_code == 401:
-#             return RedirectResponse(url="/login", status_code=HTTP_302_FOUND)
-#         else:
-#             raise e
-#     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
 
 @app.get("/rules")
