@@ -21,10 +21,10 @@ class Login(BaseModel):
     password: str
 
 class EditUser(BaseModel):
-    first_name: str
-    last_name: str
+    firstName: str
+    lastName: str
     email: str
-    phone_number: str
+    phoneNumber: str
     role : str
     status: str
     
@@ -129,10 +129,10 @@ async def list_user():
 @router.post("/edit_user")
 async def edit_user(Edit: EditUser ):
     # if get_current_user ==1:
-    value = mf_user_management.edit_user(first_name= Edit.first_name ,
-                                         last_name=Edit.last_name,
+    value = mf_user_management.edit_user(first_name= Edit.firstName ,
+                                         last_name=Edit.lastName,
                                          email=Edit.email,
-                                         phone_number = Edit.phone_number,
+                                         phone_number = Edit.phoneNumber,
                                          role = Edit.role,
                                          status= Edit.status
                                         )
