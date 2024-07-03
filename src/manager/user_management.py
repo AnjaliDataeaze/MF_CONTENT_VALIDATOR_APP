@@ -1,6 +1,6 @@
 import psycopg2
 from datetime import datetime
-from src.config.queries import INSERT_USER, SELECT_PASSWORD, LIST_USER
+from src.config.queries import INSERT_USER, SELECT_PASSWORD, LIST_USER, UPDATE_USER, DELETE_USER
 from src.config.credentials import db_config
 
 try:
@@ -11,12 +11,10 @@ except Exception as error:
     exit()
 
 
-
 class User_Manager:
 
     def login(self, email, password):
         try:
-            values = (email)
             query = f"SELECT password FROM users WHERE email='{email}'"
             cursor.execute(query)
             row = cursor.fetchone()
@@ -34,30 +32,52 @@ class User_Manager:
     
         
 
-    def add_user(self, username, password, email, first_name, last_name, phone_number):
+    def add_user(self, email, password, first_name, last_name, phone_number, role, status):
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            values = (username, password, email, first_name, last_name, phone_number, now, now)
+            values = (email, password, first_name, last_name, phone_number, role, status, now, now)
             cursor.execute(INSERT_USER, values)
             conn.commit()
             return 1
         except Exception as error:
-            return 2, f"Error : {error}"
+            return  f"Error : {error}"
              
 
     def list_user(self):
         try:
+            print("Calling list of user")
             cursor.execute(LIST_USER)
-            row= cursor.fetchall()
-            print("LIST_USER")
-            print(row)
+            row = cursor.fetchall()
+            print("Row", row)
             return 1, row 
         except Exception as e:
             return 2 , str(e)
 
-
-    def logout(self):
-        pass
+    def edit_user(self, first_name, last_name, email, phone_number, role, status):
+        try:
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            values = (first_name, last_name, phone_number, role, status, now, email)
+            print("Valuess-->", values)
+            cursor.execute(UPDATE_USER, values)
+            conn.commit()
+            return 1 
+        except Exception as err:
+            return f"Error : {error}"
         
+        
+
+    def delete_user(self, user_id):
+        try:
+            
+            cursor.execute(DELETE_USER,(user_id,))
+            conn.commit()
+            return 1
+        except Exception as error:
+            print(error)
+            return f"Error: {error}"
+
+
+    
+   
         
     
