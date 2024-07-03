@@ -47,7 +47,6 @@ class Rules:
         try:
             cursor.execute(SELECT_RULES)
             rules = cursor.fetchall()
-            print("List Rules: ", rules)
             return 1, rules
         except Exception as error:
             return 2, f"Error connecting to PostgreSQL: {error}"
@@ -67,7 +66,6 @@ class Rules:
         try:
             cursor.execute(DELETE_RULE_TO_PROGRAM,(rule_id,))
             cursor.execute(DELETE_RULE, (rule_id,))
-
             conn.commit()
             return 1
         except Exception as error:
@@ -77,12 +75,8 @@ class Rules:
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             values = (program_id, rule_id, now, now)
-            print("calling add rule to program")
-            print(f"values-->{values}")
             cursor.execute(INSERT_RULE_TO_PROGRAM, values)
             conn.commit()
-            print("SUccessful")
-            # return "Rule linked to program successfully!"
             return 1
         except Exception as error:
             return f"Error : {error}"
