@@ -32,10 +32,10 @@ class User_Manager:
     
         
 
-    def add_user(self, email, password, first_name, last_name, phone_number, role):
+    def add_user(self, email, password, first_name, last_name, phone_number, role, status):
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            values = (email, password, first_name, last_name, phone_number, role, now, now)
+            values = (email, password, first_name, last_name, phone_number, role, status, now, now)
             cursor.execute(INSERT_USER, values)
             conn.commit()
             return 1
@@ -45,29 +45,35 @@ class User_Manager:
 
     def list_user(self):
         try:
+            print("Calling list of user")
             cursor.execute(LIST_USER)
-            row= cursor.fetchall()
+            row = cursor.fetchall()
+            print("Row", row)
             return 1, row 
         except Exception as e:
             return 2 , str(e)
 
-    def edit_user(self, email, password, new_role, new_first_name, new_last_name):
+    def edit_user(self, first_name, last_name, email, phone_number, role, status):
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            values = (password, new_role, new_first_name, new_last_name, now, email)
+            values = (first_name, last_name, phone_number, role, status, now, email)
+            print("Valuess-->", values)
             cursor.execute(UPDATE_USER, values)
             conn.commit()
             return 1 
-        except Exception as e:
-            return 2 
+        except Exception as err:
+            return f"Error : {error}"
+        
         
 
-    def delete_user(self, email):
+    def delete_user(self, user_id):
         try:
-            cursor.execute(DELETE_USER,(email,))
+            
+            cursor.execute(DELETE_USER,(user_id,))
             conn.commit()
             return 1
         except Exception as error:
+            print(error)
             return f"Error: {error}"
 
 
