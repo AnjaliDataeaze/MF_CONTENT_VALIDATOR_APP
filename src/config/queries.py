@@ -130,19 +130,21 @@ INSERT_OUTPUT = """ INSERT INTO output (group_id, document_link, rulename, rule,
 ## Queries for User Managememnt
 
 
-INSERT_USER = """ INSERT INTO users (email, password, first_name, last_name, phone_number, role, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+INSERT_USER = """ INSERT INTO users (email, password, first_name, last_name, phone_number, role, status, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """
 SELECT_PASSWORD = """SELECT password FROM users WHERE email= %s """
 
-LIST_USER = "SELECT email FROM users "
+LIST_USER = "SELECT  user_id, first_name, last_name, email, role, status  FROM users "
 
-UPDATE_USER = """ UPDATE users 
-                  password = %s, 
-                  role = %s,
+UPDATE_USER = """ UPDATE users SET
                   first_name = %s,
                   last_name = %s, 
-                  lastupdated_timestamp = %s 
+                  phone_number= %s,
+                  role = %s,
+                  status = %s,
+                  updated_at = %s 
                   WHERE email = %s"""
 
-DELETE_USER = """" DELETE FROM users WHERE email = %s"""
+
+DELETE_USER = """ DELETE FROM users WHERE user_id = %s"""
