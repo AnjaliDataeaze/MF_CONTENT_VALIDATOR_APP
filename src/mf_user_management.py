@@ -5,18 +5,17 @@ manager = User_Manager()
 
 
 def standard_login( email, password):
-    print("MF_standard login")
     return manager.login(email=email, password=password)
 
-def add_user(username, password,  email, first_name, last_name, phone_number):
-    return manager.add_user(username, password,  email, first_name, last_name, phone_number)
+def add_user(email, password, first_name, last_name, phone_number, role, status):
+    return manager.add_user(email, password, first_name, last_name, phone_number, role, status)
     
 
 def list_user():
     return manager.list_user()
 
-def edit_user(email, password, role, first_name, last_name):
-    return manager.edit_user(email=email, password=password, new_role=role, new_first_name=first_name, new_last_name=last_name)
+def edit_user(first_name, last_name, email, phone_number, role, status):
+    return manager.edit_user(first_name, last_name, email, phone_number, role, status)
 
-def delete_user(email):
-    return manager.delete_user(email=email)
+def delete_user(user_id):
+    return manager.delete_user(user_id=user_id)
