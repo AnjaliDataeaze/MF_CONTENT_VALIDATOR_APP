@@ -135,7 +135,7 @@ INSERT_USER = """ INSERT INTO users (email, password, first_name, last_name, pho
                     """
 SELECT_PASSWORD = """SELECT password FROM users WHERE email= %s """
 
-LIST_USER = "SELECT  user_id, first_name, last_name, email, role, status  FROM users "
+LIST_USER = "SELECT  user_id, first_name, last_name, email, phone_number, role, status  FROM users "
 
 UPDATE_USER = """ UPDATE users SET
                   first_name = %s,
