@@ -47,7 +47,6 @@ class Rules:
         try:
             cursor.execute(SELECT_RULES)
             rules = cursor.fetchall()
-            print("List Rules: ", rules)
             return 1, rules
         except Exception as error:
             return 2, f"Error connecting to PostgreSQL: {error}"
