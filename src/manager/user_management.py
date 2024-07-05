@@ -28,8 +28,15 @@ class User_Manager:
                     return 2
                 
         except Exception as error:
-            return f"Error : {error}"
-    
+            if conn:
+                conn.rollback()
+            return f"Error connecting to PostgreSQL: {error}"
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+            
         
 
     def add_user(self, email, password, first_name, last_name, phone_number, role, status):
@@ -40,7 +47,14 @@ class User_Manager:
             conn.commit()
             return 1
         except Exception as error:
-            return  f"Error : {error}"
+            if conn:
+                conn.rollback()
+            return f"Error connecting to PostgreSQL: {error}"
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
              
 
     def list_user(self):
@@ -50,8 +64,15 @@ class User_Manager:
             row = cursor.fetchall()
             print("Row", row)
             return 1, row 
-        except Exception as e:
-            return 2 , str(e)
+        except Exception as error:
+            if conn:
+                conn.rollback()
+            return 2, f"Error connecting to PostgreSQL: {error}"
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
     def edit_user(self, first_name, last_name, email, phone_number, role, status):
         try:
@@ -61,8 +82,15 @@ class User_Manager:
             cursor.execute(UPDATE_USER, values)
             conn.commit()
             return 1 
-        except Exception as err:
-            return f"Error : {error}"
+        except Exception as error:
+            if conn:
+                conn.rollback()
+            return f"Error connecting to PostgreSQL: {error}"
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
         
         
 
@@ -73,8 +101,14 @@ class User_Manager:
             conn.commit()
             return 1
         except Exception as error:
-            print(error)
-            return f"Error: {error}"
+            if conn:
+                conn.rollback()
+            return f"Error connecting to PostgreSQL: {error}"
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
 
     
