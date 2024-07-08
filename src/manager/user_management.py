@@ -31,11 +31,11 @@ class User_Manager:
             if conn:
                 conn.rollback()
             return f"Error connecting to PostgreSQL: {error}"
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
+        # finally:
+        #     if cursor:
+        #         cursor.close()
+        #     if conn:
+        #         conn.close()
             
         
 
@@ -50,11 +50,11 @@ class User_Manager:
             if conn:
                 conn.rollback()
             return f"Error connecting to PostgreSQL: {error}"
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
+        # finally:
+        #     if cursor:
+        #         cursor.close()
+        #     if conn:
+        #         conn.close()
              
 
     def list_user(self):
@@ -68,11 +68,11 @@ class User_Manager:
             if conn:
                 conn.rollback()
             return 2, f"Error connecting to PostgreSQL: {error}"
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
+        # finally:
+        #     if cursor:
+        #         cursor.close()
+        #     if conn:
+        #         conn.close()
 
     def edit_user(self, first_name, last_name, email, phone_number, role, status):
         try:
@@ -86,11 +86,11 @@ class User_Manager:
             if conn:
                 conn.rollback()
             return f"Error connecting to PostgreSQL: {error}"
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
+        # finally:
+        #     if cursor:
+        #         cursor.close()
+        #     if conn:
+        #         conn.close()
         
         
 
@@ -104,11 +104,11 @@ class User_Manager:
             if conn:
                 conn.rollback()
             return f"Error connecting to PostgreSQL: {error}"
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
+        # finally:
+        #     if cursor:
+        #         cursor.close()
+        #     if conn:
+        #         conn.close()
 
 
     
