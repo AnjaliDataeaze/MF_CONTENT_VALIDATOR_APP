@@ -426,7 +426,7 @@ class ExtractText:
         print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2")
 
         if val ==1:
-            image_text = ExtractText().extract_text_from_image(s3_bucket_name, s3_folder)
+            image_text = ExtractText().text_form_gif_images(s3_bucket_name, s3_folder)
             print("IMAGE_TEXT")
             rules_descriptions = ExtractText().fetch_rules_and_descriptions(program_type)
             print("RULE*******************************")
