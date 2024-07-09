@@ -107,9 +107,9 @@ async def auth(request: Request):
 #     return RedirectResponse(url='/home')
 '''
 
-class UserLogin(BaseModel):
-    email: str
-    password: str
+# class UserLogin(BaseModel):
+#     email: str
+#     password: str
 
 # @app.post("/user-login")
 # async def userlogin(request: Request, logIn: UserLogin):
@@ -133,35 +133,35 @@ class UserLogin(BaseModel):
 #     print("USER", value)
 #     return {"status": "SUCCESS" if value == 1 else "FAILED", "data": "unknown error."}
 
-@app.post("/user-login")
-async def userlogin(logIn: UserLogin):
+# @app.post("/user-login")
+# async def userlogin(logIn: UserLogin):
    
-    user = standard_login(logIn.email, logIn.password)
+#     user = standard_login(logIn.email, logIn.password)
     
-    if user==1:
-        return RedirectResponse(url='/root', status_code=303)
-    elif user == 3:
-        raise HTTPException(status_code=401, detail="User Not FOund")
-    else:
-        raise HTTPException(status_code=401, detail="Incorrect username or password")
+#     if user==1:
+#         return RedirectResponse(url='/root', status_code=303)
+#     elif user == 3:
+#         raise HTTPException(status_code=401, detail="User Not FOund")
+#     else:
+#         raise HTTPException(status_code=401, detail="Incorrect username or password")
 
 
-@app.get('/logout')
-def logout(request: Request):
-    login_method = request.session.get('login_method')
-    print("login_method-->",login_method)
-    print("Request_Session_of_Login", request.session)
-    if login_method == 'google':
-        if 'user' in request.session:
-            request.session.pop('user')
-            request.session.clear()
-        else:
-            request.session.clear()
-        return RedirectResponse(url='/login')
+# @app.get('/logout')
+# def logout(request: Request):
+#     login_method = request.session.get('login_method')
+#     print("login_method-->",login_method)
+#     print("Request_Session_of_Login", request.session)
+#     if login_method == 'google':
+#         if 'user' in request.session:
+#             request.session.pop('user')
+#             request.session.clear()
+#         else:
+#             request.session.clear()
+#         return RedirectResponse(url='/login')
 
-    request.session.pop('user', None)  # Remove user data from session
-    request.session.clear()            # Clear all other session data
-    return RedirectResponse(url='/login')
+#     request.session.pop('user', None)  # Remove user data from session
+#     request.session.clear()            # Clear all other session data
+#     return RedirectResponse(url='/login')
 
 app.include_router(rule_endpoint.router)
 app.include_router(program.router)
@@ -169,7 +169,7 @@ app.include_router(user_management.router)
 app.include_router(validation.router)
 
 
-app.mount("/static", StaticFiles(directory= BUILD_PATH + "/static"), name="static")
+# app.mount("/static", StaticFiles(directory= BUILD_PATH + "/static"), name="static")
 
 # @app.get("/programtypes")
 # async def program_types(request: Request, user=Depends(get_current_user)):
@@ -179,29 +179,29 @@ app.mount("/static", StaticFiles(directory= BUILD_PATH + "/static"), name="stati
 #         return RedirectResponse(url="/login", status_code=HTTP_302_FOUND)
 
 
-@app.get("/programtypes")
-async def program_types():
-    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+# @app.get("/programtypes")
+# async def program_types():
+#     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
-@app.get("/users")
-async def users():
-    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+# @app.get("/users")
+# async def users():
+#     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
    
-@app.get("/rules")
-async def rule_endpoint():
-    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+# @app.get("/rules")
+# async def rule_endpoint():
+#     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
-@app.get("/validate-content")
-async def validate_content():
-    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+# @app.get("/validate-content")
+# async def validate_content():
+#     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
-@app.get("/root")
-async def root():
-    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+# @app.get("/root")
+# async def root():
+#     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
-@app.get("/login")
-async def login():
-    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+# @app.get("/login")
+# async def login():
+#     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
 
 # @app.get("/users")
