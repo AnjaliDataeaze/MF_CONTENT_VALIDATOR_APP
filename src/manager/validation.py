@@ -19,7 +19,6 @@ import numpy as np
 import cv2
 from typing import List
 from botocore.exceptions import NoCredentialsError
-from __future__ import annotations
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -66,8 +65,8 @@ class ExtractText:
         except NoCredentialsError:
             print("Credentials not available")
             return None
-
-    def fetch_rules_and_descriptions(self, program_name):
+    @staticmethod
+    def fetch_rules_and_descriptions(program_name):
         try:
             with conn.cursor() as cursor:
                 # Get the program ID for the given program name
@@ -96,13 +95,14 @@ class ExtractText:
             logging.exception("Error fetching rules and descriptions:")
             return f"Error fetching rules and descriptions: {e}"
 
-
-    def generate_prompt(self, description):
+    @staticmethod
+    def generate_prompt(description):
 
         prompt = f"{prompt_from_config}\n{description}"
         return prompt
-
-    def extract_text_from_image(self, image_path):
+    
+    @staticmethod
+    def extract_text_from_image(image_path):
         # Read image file
         with open(image_path, 'rb') as document:
             image_bytes = document.read()
@@ -117,8 +117,8 @@ class ExtractText:
                 text += item["Text"] + "\n"
         
         return text
-    
-    def convert_pdf_to_images(self, pdf_path):
+    @staticmethod
+    def convert_pdf_to_images(pdf_path):
         # Open the PDF file
         document = fitz.open(pdf_path)
         images = []
@@ -132,8 +132,9 @@ class ExtractText:
         
         return images
 
-    def extract_text_from_pdf(self, pdf_path):
-        images = self.convert_pdf_to_images(pdf_path)
+    @staticmethod
+    def extract_text_from_pdf(pdf_path):
+        images = ExtractText().convert_pdf_to_images(pdf_path)
         all_text = ""
 
         for image in images:
@@ -147,8 +148,8 @@ class ExtractText:
         
         return all_text
     
-        
-    def generate_message(self,bedrock_runtime, model_id, system_prompt, messages, max_tokens):
+    @staticmethod
+    def generate_message(bedrock_runtime, model_id, system_prompt, messages, max_tokens):
 
         body=json.dumps(
             {
@@ -167,7 +168,8 @@ class ExtractText:
 
         return text_value
 
-    def generate_response(self,input_text):
+    @staticmethod
+    def generate_response(input_text):
         """
         Entrypoint for Anthropic Claude message example.
         """
@@ -188,7 +190,7 @@ class ExtractText:
             user_message =  {"role": "user", "content": input_text}
             messages = [user_message]
 
-            response = self.generate_message(bedrock_runtime, model_id, system_prompt, messages, max_tokens)
+            response = ExtractText().generate_message(bedrock_runtime, model_id, system_prompt, messages, max_tokens)
             # print(json.dumps(response, indent=4))
 
             single_string = response  # Use the response text directly
@@ -200,8 +202,9 @@ class ExtractText:
             print("A client error occured: " +
                 format(message))
             return None
-    
-    def return_output(self,group_id):
+        
+    @staticmethod
+    def return_output(group_id):
         # Fetch the inserted data for frontend display
         try:
                 with conn.cursor() as cursor:
@@ -420,9 +423,13 @@ class ExtractText:
         val , s3_url= ExtractText().get_frame(file_path)
         s3_bucket_name = "mutual-fund-dataeaze"
         s3_folder = 'GIF'
+        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2")
+
         if val ==1:
             image_text = ExtractText().extract_text_from_image(s3_bucket_name, s3_folder)
+            print("IMAGE_TEXT")
             rules_descriptions = ExtractText().fetch_rules_and_descriptions(program_type)
+            print("RULE*******************************")
             if isinstance(rules_descriptions, str):
                 return rules_descriptions  # Return the error message
             else:
