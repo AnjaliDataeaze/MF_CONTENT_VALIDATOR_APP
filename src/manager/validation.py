@@ -310,14 +310,15 @@ class ExtractText:
 
     @staticmethod
     def get_frame(gif_path):
-        s3_bucket_name = "mutual_fund_dataeaze"
+        s3_bucket_name = "mutual-fund-dataeaze"
         s3_folder = 'GIF'
         gif = imageio.mimread(gif_path)
         fps = 10  # GIFs usually don't have a defined FPS, so you may need to set it manually
-
+        
         # Upload the original GIF file to S3
         try:
-            s3.upload_file(gif_path, s3_bucket_name, f'{s3_folder}/original_gif.gif')
+            s3_file = os.path.basename(gif_path)
+            s3.upload_file(gif_path, s3_bucket_name, f'{s3_folder}/{s3_file}')
             print(f'Uploaded original GIF to s3://{s3_bucket_name}/{s3_folder}/original_gif.gif')
         except FileNotFoundError:
             print(f'The file {gif_path} was not found.')
@@ -417,7 +418,7 @@ class ExtractText:
 
     def process_gif(self,file_path, program_type):
         val , s3_url= ExtractText().get_frame(file_path)
-        s3_bucket_name = "mutual_fund_dataeaze"
+        s3_bucket_name = "mutual-fund-dataeaze"
         s3_folder = 'GIF'
         if val ==1:
             image_text = ExtractText().extract_text_from_image(s3_bucket_name, s3_folder)
