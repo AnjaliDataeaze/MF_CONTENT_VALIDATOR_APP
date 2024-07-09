@@ -14,6 +14,7 @@ UPDATE_PROGRAM = """
 """
 
 DELETE_PROGRAM = "DELETE FROM program WHERE id = %s"
+DELETE_RULE_TO_PROGRAM_FROM_PROGRAM = "DELETE FROM rule_to_program WHERE program_id = %s"
 RULE_ID_RULE_TO_PROGRAM = "SELECT rules_id FROM rule_to_program WHERE program_id = %s"
 
 DELETE_RULENAMES = "DELETE FROM rules WHERE id in %s"
@@ -23,7 +24,7 @@ INSERT_RULE = """
     VALUES (%s, %s, %s, %s, %s, %s)
 """
 
-SELECT_RULES = "SELECT r.rulename, r.media_type, r.description, r.disclaimer, p.name as program_type, r.id FROM rules as r join rule_to_program rp on r.id = rp.rules_id join program p on rp.program_id = p.id ;"
+SELECT_RULES = "SELECT id, rulename, media_type, description, disclaimer FROM rules;"
 
 UPDATE_RULE = """
     UPDATE rules 
@@ -70,6 +71,14 @@ SELECT_RULES_BY_PROGRAM = """
     JOIN rule_to_program rp ON r.id = rp.rules_id
     WHERE rp.program_id = %s
 """
+
+SELECT_MAPPED_RULES = """
+    SELECT r.id, r.rulename
+    FROM rules r
+    JOIN rule_to_program rp ON r.id = rp.rules_id
+    WHERE rp.program_id = %s
+"""
+
 
 INSERT_DOCUMENT = """
     INSERT INTO document (doc_name, doc_type, created_timestamp, lastupdated_timestamp) 
