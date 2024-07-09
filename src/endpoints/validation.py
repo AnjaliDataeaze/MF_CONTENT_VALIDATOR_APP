@@ -63,6 +63,11 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
             os.remove(file_location)
             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
         # Delete the file after processing
+        if media_type =="GIF":
+            value, response = mf_validator.gif_validation(file_location, program_type)
+            # list_2d = [inner for outer in response for inner in outer]
+            os.remove(file_location)
+            return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
         
     except Exception as e:
         return {"status": "FAILED", "data": str(e)}
