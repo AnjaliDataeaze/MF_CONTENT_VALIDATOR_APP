@@ -79,7 +79,6 @@ def validation(file_path, program_type):
         return 1, results
 
 def gif_validation(file_path, program_type):
-
     extract1 = ExtractText()
     value, results = extract1.process_gif(file_path=file_path, program_type=program_type)
     if value == 1:
