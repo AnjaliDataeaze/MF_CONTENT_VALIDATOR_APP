@@ -169,7 +169,7 @@ app.include_router(user_management.router)
 app.include_router(validation.router)
 
 
-# app.mount("/static", StaticFiles(directory= BUILD_PATH + "/static"), name="static")
+app.mount("/static", StaticFiles(directory= BUILD_PATH + "/static"), name="static")
 
 # @app.get("/programtypes")
 # async def program_types(request: Request, user=Depends(get_current_user)):
@@ -179,29 +179,29 @@ app.include_router(validation.router)
 #         return RedirectResponse(url="/login", status_code=HTTP_302_FOUND)
 
 
-# @app.get("/programtypes")
-# async def program_types():
-#     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+@app.get("/programtypes")
+async def program_types():
+    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
-# @app.get("/users")
-# async def users():
-#     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+@app.get("/users")
+async def users():
+    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
    
-# @app.get("/rules")
-# async def rule_endpoint():
-#     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+@app.get("/rules")
+async def rule_endpoint():
+    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
-# @app.get("/validate-content")
-# async def validate_content():
-#     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+@app.get("/validate-content")
+async def validate_content():
+    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
-# @app.get("/root")
-# async def root():
-#     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+@app.get("/root")
+async def root():
+    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
-# @app.get("/login")
-# async def login():
-#     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+@app.get("/login")
+async def login():
+    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
 
 # @app.get("/users")
