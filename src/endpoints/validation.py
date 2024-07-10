@@ -55,17 +55,14 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
         
         if media_type =="pdf":
             value, response = mf_validator.validation(file_location, program_type)
-            # list_2d = [inner for outer in response for inner in outer]
             os.remove(file_location)
             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
         elif media_type == "Video":
             value, data = mf_validator.transcript(file_location)
             os.remove(file_location)
             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
-        # Delete the file after processing
         elif media_type =="GIF":
             value, response = mf_validator.gif_validation(file_location, program_type)
-            # list_2d = [inner for outer in response for inner in outer]
             os.remove(file_location)
             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
         
