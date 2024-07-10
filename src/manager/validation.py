@@ -97,7 +97,6 @@ class ExtractText:
 
     @staticmethod
     def generate_prompt(description):
-
         prompt = f"{prompt_from_config}\n{description}"
         return prompt
     
@@ -254,10 +253,13 @@ class ExtractText:
 
             # Construct the document_link with s3_url and current timestamp
             document_link = f"{s3_url}_{datetime.now().isoformat()}"
-            print(document_link)
 
             if isinstance(results, str):
-                results = ast.literal_eval(results)
+                try:
+                    results = ast.literal_eval(results)
+                except (ValueError, SyntaxError) as e:
+                    print(f"Failed to parse results: {e}")
+
 
 
             # Check if lengths of rules_descriptions and results match
@@ -322,7 +324,7 @@ class ExtractText:
         try:
             s3_file = os.path.basename(gif_path)
             s3.upload_file(gif_path, s3_bucket_name, f'{s3_folder}/{s3_file}')
-            print(f'Uploaded original GIF to s3://{s3_bucket_name}/{s3_folder}/original_gif.gif')
+            print(f'Uploaded original GIF to s3://{s3_bucket_name}/{s3_folder}/{s3_file}')
         except FileNotFoundError:
             print(f'The file {gif_path} was not found.')
         except NoCredentialsError:
@@ -368,8 +370,8 @@ class ExtractText:
             stable_intervals.append((start_time, end_time))
 
         # Print stable intervalsget_time_frame(gif_path):
-        for interval in stable_intervals:
-            print(f"({interval[0]:.2f} , {interval[1]:.2f}),")
+        # for interval in stable_intervals:
+        #     print(f"({interval[0]:.2f} , {interval[1]:.2f}),")
 
         # Extract and upload frames at the end of each interval
         for i, (start_time, end_time) in enumerate(stable_intervals):
@@ -420,16 +422,16 @@ class ExtractText:
         return combined_text  
 
     def process_gif(self,file_path, program_type):
-        val , s3_url= ExtractText().get_frame(file_path)
+        val, s3_url= ExtractText().get_frame(file_path)
         s3_bucket_name = "mutual-fund-dataeaze"
         s3_folder = 'GIF'
-        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2")
-
         if val ==1:
             image_text = ExtractText().text_form_gif_images(s3_bucket_name, s3_folder)
-            print("IMAGE_TEXT")
+            print("IMAGE_TEXT----->", image_text)
             rules_descriptions = ExtractText().fetch_rules_and_descriptions(program_type)
             print("RULE*******************************")
+            print("RULE Description-->", rules_descriptions)
+
             if isinstance(rules_descriptions, str):
                 return rules_descriptions  # Return the error message
             else:
