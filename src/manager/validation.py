@@ -398,7 +398,7 @@ class ExtractText:
     
     
     @staticmethod
-    def extract_text_from_image(image_bytes):
+    def extract_text_from_gif_image(image_bytes):
         response = textract.detect_document_text(Document={'Bytes': image_bytes})
         text = ""
         for item in response["Blocks"]:
@@ -415,7 +415,7 @@ class ExtractText:
         for file_key in image_files:
             obj = s3.get_object(Bucket=s3_bucket_name, Key=file_key)
             image_bytes = obj['Body'].read()
-            img_text = ExtractText().extract_text_from_image(image_bytes=image_bytes)
+            img_text = ExtractText().extract_text_from_gif_image(image_bytes=image_bytes)
             combined_text += img_text + " "
         return combined_text  
 
