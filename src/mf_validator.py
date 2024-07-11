@@ -8,43 +8,47 @@ from src.manager.disclaimer import Disclaimer
 from src.manager.validation import ExtractText
 from src.manager.transcription import Transcrib
 # class validator:
-def add_program(name, description):
-    program = Program(name, description)
+def add_program(name, description, rules):
+    program = Program(name, description, rules)
     return program.add_program()
 
 def list_programs():
     return Program.list_programs()
 
-def edit_program(program_id, name, description):
+def edit_program(program_id, name, description, rules):
 
-    program = Program("", "")
-    return program.edit_program(program_id, name, description)
+    program = Program("", "", "")
+    return program.edit_program(program_id, name, description, rules)
 
 
 def delete_program(program_id):
-    program = Program("", "")
+    program = Program("", "", "" )
     return program.delete_program(program_id)
 
 # ------------------------------------------------------------#
 
 
-def add_rule(rulename, media_type, description, program_type, disclaimer):
-    rule = Rules(rulename, media_type, description, program_type, disclaimer)
+def add_rule(rulename, media_type, description, disclaimer):
+    rule = Rules(rulename, media_type, description, disclaimer)
     return rule.add_rule()
 
 def list_rules():
     return Rules.list_rules()
 
 def edit_rule(rule_id, rulename, description, disclaimer):
-    rule = Rules("", "", "", "", "")
+    rule = Rules("", "", "", "")
     return rule.edit_rule(rule_id, rulename, description, disclaimer)
 
 def delete_rule(rule_id):
-    rule = Rules("","", "", "", "")
+    rule = Rules("","", "", "")
     return rule.delete_rule(rule_id)
 
 def list_rules_by_program(program_id):
     return Rules.list_rules_by_program(program_id)
+
+def get_mapped_rules(program_id):
+    rule = Rules("","", "", "")
+    return rule.get_mapped_rules(program_id)
 
 # ------------------------------------------------------------#
 
@@ -74,6 +78,11 @@ def validation(file_path, program_type):
     if value == 1:
         return 1, results
 
+def gif_validation(file_path, program_type):
+    extract1 = ExtractText()
+    value, results = extract1.process_gif(file_path=file_path, program_type=program_type)
+    if value == 1:
+        return 1, results
 
 # ------------------------  Transcript time ---------------------------# 
 
