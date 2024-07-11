@@ -14,6 +14,13 @@ from botocore.exceptions import NoCredentialsError
 import os
 from datetime import datetime
 import ast
+import imageio
+import numpy as np
+import cv2
+from typing import List
+from botocore.exceptions import NoCredentialsError
+from PIL import Image
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -33,6 +40,12 @@ textract = boto3.client(
     region_name=region_name
 )
 
+s3 = boto3.client(
+    's3',
+    aws_access_key_id = aws_access_key_id,
+    aws_secret_access_key = aws_secret_access_key,
+    region_name = region_name
+)
 
 class ExtractText:
     # def __init__(self, db_config):
@@ -52,8 +65,8 @@ class ExtractText:
         except NoCredentialsError:
             print("Credentials not available")
             return None
-
-    def fetch_rules_and_descriptions(self, program_name):
+    @staticmethod
+    def fetch_rules_and_descriptions(program_name):
         try:
             with conn.cursor() as cursor:
                 # Get the program ID for the given program name
@@ -82,13 +95,13 @@ class ExtractText:
             logging.exception("Error fetching rules and descriptions:")
             return f"Error fetching rules and descriptions: {e}"
 
-
-    def generate_prompt(self, description):
-
+    @staticmethod
+    def generate_prompt(description):
         prompt = f"{prompt_from_config}\n{description}"
         return prompt
-
-    def extract_text_from_image(self, image_path):
+    
+    @staticmethod
+    def extract_text_from_image(image_path):
         # Read image file
         with open(image_path, 'rb') as document:
             image_bytes = document.read()
@@ -103,8 +116,8 @@ class ExtractText:
                 text += item["Text"] + "\n"
         
         return text
-    
-    def convert_pdf_to_images(self, pdf_path):
+    @staticmethod
+    def convert_pdf_to_images(pdf_path):
         # Open the PDF file
         document = fitz.open(pdf_path)
         images = []
@@ -118,8 +131,9 @@ class ExtractText:
         
         return images
 
-    def extract_text_from_pdf(self, pdf_path):
-        images = self.convert_pdf_to_images(pdf_path)
+    @staticmethod
+    def extract_text_from_pdf(pdf_path):
+        images = ExtractText().convert_pdf_to_images(pdf_path)
         all_text = ""
 
         for image in images:
@@ -133,8 +147,8 @@ class ExtractText:
         
         return all_text
     
-        
-    def generate_message(self,bedrock_runtime, model_id, system_prompt, messages, max_tokens):
+    @staticmethod
+    def generate_message(bedrock_runtime, model_id, system_prompt, messages, max_tokens):
 
         body=json.dumps(
             {
@@ -153,7 +167,8 @@ class ExtractText:
 
         return text_value
 
-    def generate_response(self,input_text):
+    @staticmethod
+    def generate_response(input_text):
         """
         Entrypoint for Anthropic Claude message example.
         """
@@ -174,7 +189,7 @@ class ExtractText:
             user_message =  {"role": "user", "content": input_text}
             messages = [user_message]
 
-            response = self.generate_message(bedrock_runtime, model_id, system_prompt, messages, max_tokens)
+            response = ExtractText().generate_message(bedrock_runtime, model_id, system_prompt, messages, max_tokens)
             # print(json.dumps(response, indent=4))
 
             single_string = response  # Use the response text directly
@@ -186,8 +201,9 @@ class ExtractText:
             print("A client error occured: " +
                 format(message))
             return None
-    
-    def return_output(self,group_id):
+        
+    @staticmethod
+    def return_output(group_id):
         # Fetch the inserted data for frontend display
         try:
                 with conn.cursor() as cursor:
@@ -237,10 +253,13 @@ class ExtractText:
 
             # Construct the document_link with s3_url and current timestamp
             document_link = f"{s3_url}_{datetime.now().isoformat()}"
-            print(document_link)
 
             if isinstance(results, str):
-                results = ast.literal_eval(results)
+                try:
+                    results = ast.literal_eval(results)
+                except (ValueError, SyntaxError) as e:
+                    print(f"Failed to parse results: {e}")
+
 
 
             # Check if lengths of rules_descriptions and results match
@@ -289,3 +308,183 @@ class ExtractText:
         except Exception as e:
             logging.exception("An error occurred during the processing")
             return 2, f"An error occurred: {e}"
+        
+#==========================================================================================================
+#==========================================================================================================
+#==========================================================================================================
+
+    @staticmethod
+    def get_frame(gif_path):
+        s3_bucket_name = "mutual-fund-dataeaze"
+        s3_folder = 'GIF'
+        gif = imageio.mimread(gif_path)
+        fps = 10  # GIFs usually don't have a defined FPS, so you may need to set it manually
+        
+        # Upload the original GIF file to S3
+        try:
+            s3_file = os.path.basename(gif_path)
+            s3.upload_file(gif_path, s3_bucket_name, f'{s3_folder}/{s3_file}')
+            print(f'Uploaded original GIF to s3://{s3_bucket_name}/{s3_folder}/{s3_file}')
+        except FileNotFoundError:
+            print(f'The file {gif_path} was not found.')
+        except NoCredentialsError:
+            print('Credentials not available.')
+
+        prev_frame = None
+        frame_differences = []
+
+        # Read frames from the GIF
+        for frame in gif:
+            frame = cv2.cvtColor(np.array(frame), cv2.COLOR_RGB2GRAY)
+            if prev_frame is not None:
+                # Calculate the absolute difference between current frame and previous frame
+                diff = cv2.absdiff(prev_frame, frame)
+                frame_differences.append(np.sum(diff))  # Sum of all pixel differences
+            prev_frame = frame
+
+        # Convert frame differences to a more manageable scale
+        frame_differences = np.array(frame_differences) / 1e6
+
+        # Threshold for 'no drastic change'
+        change_threshold = 0.8  # Adjust based on your video and needs
+
+        # Find stable intervals
+        stable_intervals = []
+        start_frame = 0
+
+        for i, diff in enumerate(frame_differences):
+            if diff > change_threshold:
+                if start_frame < i - 1:
+                    # End of a stable interval
+                    end_frame = i
+                    start_time = start_frame / fps
+                    end_time = end_frame / fps
+                    stable_intervals.append((start_time, end_time))
+                # Start of a new possible stable interval
+                start_frame = i + 1
+
+        # Add the last stable interval if the end of the video is stable
+        if start_frame < len(frame_differences) - 1:
+            end_time = len(frame_differences) / fps
+            start_time = start_frame / fps
+            stable_intervals.append((start_time, end_time))
+
+        # Print stable intervalsget_time_frame(gif_path):
+        # for interval in stable_intervals:
+        #     print(f"({interval[0]:.2f} , {interval[1]:.2f}),")
+
+        # Extract and upload frames at the end of each interval
+        for i, (start_time, end_time) in enumerate(stable_intervals):
+            end_frame = int(end_time * fps)
+            
+            if end_frame < len(gif):
+                frame = gif[end_frame]
+                frame_bgr = cv2.cvtColor(np.array(frame), cv2.COLOR_RGB2BGR)  # Convert to BGR format for saving with OpenCV
+                
+                output_path = f'frame_{i+1}.png'
+                cv2.imwrite(output_path, frame_bgr)
+                print(f'Saved frame at {end_time:.2f} seconds to {output_path}')
+                
+                # Upload the frame to S3
+                try:
+                    s3.upload_file(output_path, s3_bucket_name, f'{s3_folder}/{output_path}')
+                    print(f'Uploaded {output_path} to s3://{s3_bucket_name}/{s3_folder}/{output_path}')
+                except FileNotFoundError:
+                    print(f'The file {output_path} was not found.')
+                except NoCredentialsError:
+                    print('Credentials not available.')
+
+            else:
+                print(f'End frame {end_frame} is out of range for the GIF with {len(gif)} frames.')
+        return 1 ,  f"s3://{s3_bucket_name}/{s3_folder}/original_gif.gif"
+    
+    
+    @staticmethod
+    def extract_text_from_gif_image(image_bytes):
+        response = textract.detect_document_text(Document={'Bytes': image_bytes})
+        text = ""
+        for item in response["Blocks"]:
+            if item["BlockType"] == "LINE":
+                text += item["Text"] + "\n"
+        return text
+    
+    @staticmethod
+    def text_form_gif_images(s3_bucket_name,s3_folder):
+    
+        response = s3.list_objects_v2(Bucket=s3_bucket_name, Prefix=s3_folder)
+        image_files = [item['Key'] for item in response.get('Contents', []) if item['Key'].endswith(('jpg', 'jpeg', 'png'))]
+        combined_text = ""
+        for file_key in image_files:
+            obj = s3.get_object(Bucket=s3_bucket_name, Key=file_key)
+            image_bytes = obj['Body'].read()
+            img_text = ExtractText().extract_text_from_gif_image(image_bytes=image_bytes)
+            combined_text += img_text + " "
+        return combined_text  
+
+    def process_gif(self,file_path, program_type):
+        val, s3_url= ExtractText().get_frame(file_path)
+        s3_bucket_name = "mutual-fund-dataeaze"
+        s3_folder = 'GIF'
+        if val ==1:
+            image_text = ExtractText().text_form_gif_images(s3_bucket_name, s3_folder)
+            print("IMAGE_TEXT----->", image_text)
+            rules_descriptions = ExtractText().fetch_rules_and_descriptions(program_type)
+            print("RULE*******************************")
+            print("RULE Description-->", rules_descriptions)
+
+            if isinstance(rules_descriptions, str):
+                return rules_descriptions  # Return the error message
+            else:
+                content = image_text
+                prompt = ExtractText().generate_prompt(rules_descriptions)
+                content += " " + prompt
+
+            results = ExtractText().generate_response(content)
+
+            # Construct the document_link with s3_url and current timestamp
+            document_link = f"{s3_url}_{datetime.now().isoformat()}"
+
+            if isinstance(results, str):
+                results = ast.literal_eval(results)
+
+            # Check if lengths of rules_descriptions and results match
+            if not isinstance(results, list) or len(rules_descriptions) != len(results):
+
+                raise ValueError("Mismatch between number of rules and results")
+
+            # Additional debug: print each element in results to check its structure
+            for i, result in enumerate(results):
+                print(f"Result {i}: {result}, Length: {len(result)}")
+
+            try:
+                with conn.cursor() as cursor:
+                    # Generate a unique group_id
+                    cursor.execute(CREATE_SEQUENCE_GROUP_ID)
+
+                    cursor.execute(NEXTVAL_GROUP_ID)
+                    group_id = cursor.fetchone()[0]
+
+                    # Insert rules_descriptions into the table
+                    for i, rule_tuple in enumerate(rules_descriptions):
+                        rulename = rule_tuple[0]
+                        rule = rule_tuple[1]
+                        answer = results[i][0]
+                        output = results[i][1]
+
+                        # print(f"Inserting rule: group_id: {group_id}, document_link: {document_link}, rulename: {rulename}, rule: {rule}, answer: {answer}, output: {output}")
+
+                        cursor.execute(
+                            INSERT_OUTPUT,
+                            (group_id, document_link, rulename, rule, answer, output,'pdf/image')
+                        )
+
+                    # Commit the transaction for rules_descriptions
+                    conn.commit()
+                    logging.info("Data committed to the database")
+
+                final_result = ExtractText().return_output(group_id)  
+                return 1, final_result  
+            
+            except Exception as e:
+                logging.exception("Error in adding output to the database")
+                return f"Error adding output to the database: {e}"

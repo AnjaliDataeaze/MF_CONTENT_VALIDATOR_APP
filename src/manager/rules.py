@@ -2,7 +2,7 @@
 import psycopg2
 from src.manager.program import Program
 from datetime import datetime
-from src.config.queries import INSERT_RULE, SELECT_RULES, UPDATE_RULE, DELETE_RULE, INSERT_RULE_TO_PROGRAM, SELECT_RULES_BY_PROGRAM, PROGRAM_ID, RULE_ID,DELETE_RULE_TO_PROGRAM
+from src.config.queries import SELECT_MAPPED_RULES, INSERT_RULE, SELECT_RULES, UPDATE_RULE, DELETE_RULE, INSERT_RULE_TO_PROGRAM, SELECT_RULES_BY_PROGRAM, PROGRAM_ID, RULE_ID,DELETE_RULE_TO_PROGRAM
 from src.config.credentials import db_config
 
 try:
@@ -14,12 +14,11 @@ except Exception as error:
 
 #Rules(rulename, media_type, description, program_type, disclaimer)
 class Rules:   
-    def __init__(self, rulename, media_type, description, program_type, disclaimer):
+    def __init__(self, rulename, media_type, description, disclaimer):
         self.rulename = rulename
         self.description = description
         self.disclaimer = disclaimer
         self.media_type = media_type
-        self.program_type = program_type
 
     def add_rule(self):
         try:
@@ -27,14 +26,14 @@ class Rules:
             values = (self.rulename, self.media_type, self.description, self.disclaimer, now, now)
             cursor.execute(INSERT_RULE, values)
 
-            cursor.execute(PROGRAM_ID, (self.program_type,)) 
-            program_id = cursor.fetchone()
-            if program_id is None:
-                return "No program found"
-            cursor.execute(RULE_ID, (self.rulename,))
-            rule_id = cursor.fetchone()[0]
-            values2 = (program_id, rule_id, now, now)
-            cursor.execute(INSERT_RULE_TO_PROGRAM, values2)
+            # cursor.execute(PROGRAM_ID, (self.program_type,)) 
+            # program_id = cursor.fetchone()
+            # if program_id is None:
+            #     return "No program found"
+            # cursor.execute(RULE_ID, (self.rulename,))
+            # rule_id = cursor.fetchone()[0]
+            # values2 = (program_id, rule_id, now, now)
+            # cursor.execute(INSERT_RULE_TO_PROGRAM, values2)
             conn.commit()
             return 1
         except Exception as error:
@@ -64,6 +63,7 @@ class Rules:
 
     def delete_rule(self, rule_id):
         try:
+            print("Rule id from fornt end:",rule_id)
             cursor.execute(DELETE_RULE_TO_PROGRAM,(rule_id,))
             cursor.execute(DELETE_RULE, (rule_id,))
             conn.commit()
@@ -89,3 +89,22 @@ class Rules:
             return 1, rules
         except Exception as error:
             return 2,f"Error : {error}"
+
+    def get_mapped_rules(self, program_id):
+        conn = None
+        cursor = None
+        try:
+            conn = psycopg2.connect(**db_config)
+            cursor = conn.cursor()
+            cursor.execute(SELECT_MAPPED_RULES, (program_id,))
+            rules = cursor.fetchall()
+            return 1, rules
+        except Exception as error:
+            if conn:
+                conn.rollback()
+            return 2, f"Error: {error}"
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()

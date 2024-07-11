@@ -2,7 +2,7 @@
 
 import psycopg2
 from datetime import datetime
-from src.config.queries import INSERT_PROGRAM, SELECT_PROGRAMS, UPDATE_PROGRAM, DELETE_PROGRAM, RULE_ID_RULE_TO_PROGRAM, DELETE_PROGRAM_TO_RULE,DELETE_RULENAMES_1
+from src.config.queries import DELETE_RULE_TO_PROGRAM_FROM_PROGRAM, PROGRAM_ID,INSERT_PROGRAM, SELECT_PROGRAMS, UPDATE_PROGRAM, DELETE_PROGRAM, RULE_ID_RULE_TO_PROGRAM, DELETE_PROGRAM_TO_RULE,DELETE_RULENAMES_1
 from src.config.credentials import db_config
 
 try:
@@ -14,15 +14,34 @@ except Exception as error:
 
 
 class Program:
-    def __init__(self, name, description):
+    def __init__(self, name, description, rules):
         self.name = name
         self.description = description
-
+        self.rules = rules
     def add_program(self):
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             values = (self.name, self.description, now, now)
+            print("Value : ",values)
+            print("Insert program",INSERT_PROGRAM)
             cursor.execute(INSERT_PROGRAM, values)
+            
+            print("Insert program done")
+            print("--------",PROGRAM_ID)
+            name = self.name
+            print("---sssss---",name)
+            cursor.execute(PROGRAM_ID, (self.name,)) 
+            program_id = cursor.fetchone()
+            print("Program Id: ",program_id)
+            for rule_name in self.rules:
+                print(rule_name)
+                print(self.rules)
+                cursor.execute("SELECT id FROM rules WHERE rulename = %s", (rule_name,))
+                rule_id = cursor.fetchone()[0]
+                print("Rule Id",rule_id)
+                cursor.execute("INSERT INTO rule_to_program (program_id, rules_id) VALUES (%s, %s)", (program_id, rule_id))
+                print("Finallll")
+
             conn.commit()
             return 1
         except Exception as error:
@@ -40,7 +59,7 @@ class Program:
         except Exception as error:
             return 2, f"Error: {error}" 
 
-    def edit_program(self, program_id, name, description):
+    def edit_program(self, program_id, name, description, rules):
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             values = (name, description, now, program_id)
@@ -54,12 +73,21 @@ class Program:
 
     def delete_program(self, program_id):
         try:
+            cursor.execute(DELETE_RULE_TO_PROGRAM_FROM_PROGRAM,(program_id,)) # delete from rulr_to_program
+            cursor.execute(DELETE_PROGRAM, (program_id,)) # delete from program
+            conn.commit()
+            return 1
+        except Exception as error:
+            return f"Error: {error}"
+
+        """
+        try:
             cursor.execute(RULE_ID_RULE_TO_PROGRAM,(program_id,)) #fetch ruleids from rule_to_program
             rule_ids = tuple(cursor.fetchall())
             if rule_ids:
                 rule_ids_flat = tuple(rule_id[0] for rule_id in rule_ids)
                 cursor.execute(DELETE_PROGRAM_TO_RULE,(rule_ids_flat)) # delete from rulr_to_program
-                cursor.execute(DELETE_RULENAMES_1,(rule_ids_flat)) #delete from rules 
+                #cursor.execute(DELETE_RULENAMES_1,(rule_ids_flat)) #delete from rules 
                  #delete from rule_to_program
             
             cursor.execute(DELETE_PROGRAM, (program_id,)) # delete from program
@@ -67,7 +95,5 @@ class Program:
             conn.commit()
             return 1
         except Exception as error:
-            return f"Error : {error}"
-
-
-
+            return f"Error : {error}" 
+        """
