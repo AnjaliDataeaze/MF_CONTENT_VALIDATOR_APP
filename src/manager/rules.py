@@ -90,6 +90,23 @@ class Rules:
         except Exception as error:
             return 2,f"Error : {error}"
 
+
+    @staticmethod
+    def filter_rules(search):
+        try:
+            SELECT_RULES_BY_SEARCH = """
+            SELECT id, rulename, media_type, description, disclaimer
+            FROM rules
+            WHERE rulename ILIKE %s OR media_type ILIKE %s
+            """
+
+            cursor.execute(SELECT_RULES_BY_SEARCH, (f"%{search}%", f"%{search}%"))
+            rules = cursor.fetchall()
+            return 1, rules
+        except Exception as error:
+            return 2, f"Error connecting to PostgreSQL: {error}"
+
+
     def get_mapped_rules(self, program_id):
         conn = None
         cursor = None

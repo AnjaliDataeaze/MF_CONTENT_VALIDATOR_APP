@@ -4,6 +4,7 @@ import psycopg2
 from datetime import datetime
 from src.config.queries import DELETE_RULE_TO_PROGRAM_FROM_PROGRAM, PROGRAM_ID,INSERT_PROGRAM, SELECT_PROGRAMS, UPDATE_PROGRAM, DELETE_PROGRAM, RULE_ID_RULE_TO_PROGRAM, DELETE_PROGRAM_TO_RULE,DELETE_RULENAMES_1
 from src.config.credentials import db_config
+from fastapi import APIRouter, HTTPException
 
 try:
     conn = psycopg2.connect(**db_config)
@@ -60,7 +61,7 @@ class Program:
             return 2, f"Error: {error}" 
 
     def edit_program(self, program_id, name, description, rules):
-        try:
+        '''try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             values = (name, description, now, program_id)
             print("Passed Values: ",values)
@@ -69,7 +70,42 @@ class Program:
             return 1
         except Exception as error:
             return f"Error : {error}"
-        
+        '''
+        try:
+            print("Inside manager program")
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            # Update the program details
+            update_program_query = """
+                UPDATE program
+                SET name = %s, description = %s, lastupdated_timestamp = %s
+                WHERE id = %s """
+            print("update_program_query", update_program_query)
+            print("name, dec, time, id ",name,description, now,program_id)
+            cursor.execute(update_program_query, (name,description,now,program_id))
+
+            # Delete existing rules for the program
+            delete_rules_query = "DELETE FROM rule_to_program WHERE program_id = %s"
+            cursor.execute(delete_rules_query, (program_id,))
+            print("delete_rules_query",delete_rules_query)
+            
+             # Insert new rules for the program
+            insert_rule_query = "INSERT INTO rule_to_program (program_id, rules_id) VALUES (%s, %s)"
+            print("insert_rule_query",insert_rule_query)
+
+            for rule_name in rules:
+                cursor.execute("SELECT id FROM rules WHERE rulename = %s", (rule_name,))
+                rule_id = cursor.fetchone()
+                if rule_id:
+                    cursor.execute(insert_rule_query, (program_id, rule_id[0]))
+
+            conn.commit()
+            #return {"status": "SUCCESS", "data": "Program updated successfully !!!"}
+            return 1;
+        except Exception as error:
+            return f"Error : {error}"
+            #if conn:
+             #   conn.rollback()
+            #raise HTTPException(status_code=500, detail=str(error))
 
     def delete_program(self, program_id):
         try:

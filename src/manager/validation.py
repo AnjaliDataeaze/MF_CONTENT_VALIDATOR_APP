@@ -114,7 +114,7 @@ class ExtractText:
         for item in response["Blocks"]:
             if item["BlockType"] == "LINE":
                 text += item["Text"] + "\n"
-        
+        print(text)
         return text
     @staticmethod
     def convert_pdf_to_images(pdf_path):
@@ -123,7 +123,10 @@ class ExtractText:
         images = []
         for page_number in range(len(document)):
             page = document.load_page(page_number)
-            pix = page.get_pixmap()
+            zoom = 3
+            mat = fitz.Matrix(zoom, zoom)
+            pix = page.get_pixmap(matrix=mat)
+            #pix = page.get_pixmap()
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
             image_bytes = io.BytesIO()
             img.save(image_bytes, format='PNG')
@@ -183,7 +186,7 @@ class ExtractText:
 
             model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
             system_prompt = "Answer the question from given content."
-            max_tokens = 1000
+            max_tokens = 2000
 
             # Prompt with user turn only.
             user_message =  {"role": "user", "content": input_text}
@@ -239,7 +242,7 @@ class ExtractText:
                 extracted_text = text_processor.extract_text_from_pdf(file_path)
             else:
                 extracted_text = text_processor.extract_text_from_image(file_path)
-
+            print(extracted_text)
             # Fetch rules and descriptions
             rules_descriptions = text_processor.fetch_rules_and_descriptions(program_type)
             if isinstance(rules_descriptions, str):
