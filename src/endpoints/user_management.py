@@ -124,8 +124,14 @@ async def list_user():
         return {"status": "FAILED", "data": data}
     # else:
     #     return RedirectResponse(url='/login')
-    
-    
+
+
+@router.get("/filter_user")
+async def filter_user(search: str):
+    result = mf_user_management.filter_user(search)
+    return result
+
+
 @router.post("/edit_user")
 async def edit_user(Edit: EditUser ):
     # if get_current_user ==1:

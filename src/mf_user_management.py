@@ -1,7 +1,10 @@
 from src.manager.user_management import User_Manager
-
+from fastapi import FastAPI, HTTPException, Depends
+from pydantic import BaseModel
+from typing import List
 
 manager = User_Manager()
+
 
 
 def standard_login( email, password):
@@ -9,10 +12,15 @@ def standard_login( email, password):
 
 def add_user(email, password, first_name, last_name, phone_number, role, status):
     return manager.add_user(email, password, first_name, last_name, phone_number, role, status)
-    
+ 
+
 
 def list_user():
     return manager.list_user()
+
+def filter_user(search):
+    return manager.filter_user(search=search)
+
 
 def edit_user(first_name, last_name, email, phone_number, role, status):
     return manager.edit_user(first_name, last_name, email, phone_number, role, status)

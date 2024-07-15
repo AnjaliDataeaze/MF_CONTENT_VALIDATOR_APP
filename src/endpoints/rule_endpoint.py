@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from src import mf_validator
 from pydantic import BaseModel
 from src.dependency import get_current_user
@@ -77,7 +77,12 @@ def list_rules():
     return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
     # else:
     #     return RedirectResponse(url='/login')
-    
+
+@router.get("/filter_rules")
+def filter_rules(search: str = Query(None)):
+    value, data = mf_validator.filter_rules(search)
+    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
+
 @router.post("/list_rules_by_program")
 def list_rules_by_program(rule: ListRulesByProgram):
     # if get_current_user ==1:
@@ -120,5 +125,4 @@ async def get_mapped_rules(program_id: ProgramId):
         return {"status": "SUCCESS", "data": data}
     else:
         raise HTTPException(status_code=500, detail=data)
-
 

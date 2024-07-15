@@ -50,12 +50,14 @@ class User_Manager:
             if conn:
                 conn.rollback()
             return f"Error connecting to PostgreSQL: {error}"
+            #return {"status": "FAILED", "message": f"Error connecting to PostgreSQL: {error}"}
         # finally:
         #     if cursor:
         #         cursor.close()
         #     if conn:
         #         conn.close()
-             
+    
+
 
     def list_user(self):
         try:
@@ -73,6 +75,30 @@ class User_Manager:
         #         cursor.close()
         #     if conn:
         #         conn.close()
+
+
+    def filter_user(self, search):
+        try:
+            FILTER_USER = """
+            SELECT user_id, first_name, last_name, email, phone_number, role, status
+            FROM users
+            WHERE first_name ILIKE %s OR last_name ILIKE %s OR email ILIKE %s OR role ILIKE %s;
+            """
+
+            search_term = f"%{search}%"
+            cursor.execute(FILTER_USER, (search_term, search_term, search_term, search_term))
+            row = cursor.fetchall()
+            return {"status": "SUCCESS", "data": row}
+        except Exception as error:
+            if conn:
+                conn.rollback()
+            return {"status": "FAILED", "message": f"Error connecting to PostgreSQL: {error}"}
+
+
+
+
+
+
 
     def edit_user(self, first_name, last_name, email, phone_number, role, status):
         try:

@@ -73,7 +73,7 @@ SELECT_RULES_BY_PROGRAM = """
 """
 
 SELECT_MAPPED_RULES = """
-    SELECT r.id, r.rulename
+    SELECT r.id, r.rulename, r.media_type, r.disclaimer
     FROM rules r
     JOIN rule_to_program rp ON r.id = rp.rules_id
     WHERE rp.program_id = %s

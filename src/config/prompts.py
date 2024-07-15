@@ -2,12 +2,14 @@ prompt_from_config = '''
 
         Please analyze the provided text and return response each time a similar word is found.
         Please give us only answers and answer in Yes/No first and if yes then check the question is aking any information? if not then return Not Applicable and for answer No strictly return output Not Applicable.
-        Note :  1. Do not return word 'Answer' and 'output'. 
+        Note :  Provide a response for every rule name and question without skipping any. Every rule name and question listed in the input must have a corresponding answer and output in the response. Ensure completeness and accuracy.
+                1. Do not return word 'Answer' and 'output'. 
                 2. Directly return content as follows and compulsory return first Yes,No and then if explanation present for yes then add that explanation.
                 3. first Analyze the question from your side and if for answer is yes then analyze fron question that does it need any explanatin? if there is no need of explanation then return Not Applicable.
                 4. If question is asking for checking somthing present or not then only retun Yes/No. do not return any explanation for it.
-                5. Do not add anything extra in beginning of the answer like Here are the answers based on the provided text and rules do not add this. 
-        Directly return response in below format and do not add (rule name , question) ,
+                5. Do not add anything extra in beginning of the answer like Here are the answers based on the provided text and rules do not add this.
+                6. Number of input rule name & question list should also match with answer & output list. Do not skip any rulename & disclaimer for output & answer.
+        Directly return response in below mentioned format only strictly  and do not add (rule name , question) ,
         [(Answer1,output1),(Answer2,output2),(Answer3,output3)]
         [('Yes', 'Not Applicable'), ('No', 'Not Applicable'), ('Yes', 'open ended')]
 
