@@ -15,9 +15,13 @@ def add_program(name, description, rules):
 def list_programs():
     return Program.list_programs()
 
-def edit_program(program_id, name, description, rules):
 
+def filter_rules(search):
+    return Rules.filter_rules(search)
+
+def edit_program(program_id, name, description, rules):
     program = Program("", "", "")
+    #program = Program(program_id, name, description, rules)
     return program.edit_program(program_id, name, description, rules)
 
 
