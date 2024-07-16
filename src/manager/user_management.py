@@ -15,17 +15,25 @@ class User_Manager:
 
     def login(self, email, password):
         try:
-            query = f"SELECT password FROM users WHERE email='{email}'"
+            query = f"SELECT password, user_id, first_name, last_name, email, phone_number, status, role FROM users WHERE email='{email}'"
             cursor.execute(query)
             row = cursor.fetchone()
+            
+            print(f"Row--->", row)
+            print("++++++++++++++++++++++++++++++++++++++++")
+            row1 = cursor.fetchall()
+            print(f"Row1-->", row1)
             if row is None:
                 return 3
             else:
                 saved_password = row[0]
                 if saved_password == password:
-                    return 1
+                    details =[]
+                    for i in range(1, len(row)):
+                        details.append(row[i])
+                    return 1 , details
                 else:
-                    return 2
+                    return 2 , details
                 
         except Exception as error:
             if conn:

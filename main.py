@@ -27,15 +27,15 @@ def get_current_user(request: Request):
     return user
 
 class UserLogin(BaseModel):
-    email: str
+    email: str   
     password: str
 
 @app.post("/user-login")
 async def user_login(request: Request,logIn: UserLogin):
-    value = standard_login(logIn.email, logIn.password)
+    value, data = standard_login(logIn.email, logIn.password)
     if value == 1:
         request.session['user'] = logIn.email  # Save user session
-        return {"status": "SUCCESS"}
+        return {"status": "SUCCESS", "data":data }
     return {"status": "FAILED", "data": "unknown error."}
 
 @app.get('/logout')
