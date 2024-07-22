@@ -8,6 +8,9 @@ class AddRule(BaseModel):
     media_type: str
     description: str
     disclaimer: str
+    assigned_to: str
+    ruleStatus: str
+    created_by: str
 
 class EditRule(BaseModel):
     rule_id : int
@@ -24,47 +27,34 @@ class ListRulesByProgram(BaseModel):
 class ProgramId(BaseModel):
     program_id: int
 
- 
 
 @router.get("/list_rules")
-def list_rules():
-    value, data = mf_validator.list_rules()
-    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
-    
+def list_rules(status: str = None):
+    return mf_validator.list_rules(status)
+
 
 @router.get("/filter_rules")
-def filter_rules(search: str = Query(None)):
-    value, data = mf_validator.filter_rules(search)
-    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
+def filter_rules(search: str = Query(None), status: str = Query(None)):
+    return mf_validator.filter_rules(search, status)
 
-@router.post("/list_rules_by_program")
-def list_rules_by_program(rule: ListRulesByProgram):
-    value, data = mf_validator.list_rules_by_program(rule.program_id)
-    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
-    
+
 @router.post("/add_rule")
 async def add_rule(rule: AddRule):
-    value = mf_validator.add_rule(rule.rulename, rule.media_type, rule.description, rule.disclaimer)
-    return {"status": "SUCCESS" if value == 1 
-            else "FAILED", "data": "Rule added successfully !!!" if value == 1 else value}
+    return mf_validator.add_rule(rule.rulename, rule.media_type, rule.description, rule.disclaimer, rule.assigned_to, rule.ruleStatus,rule.created_by)
     
 
 @router.post("/edit_rule")
 async def edit_rule(rule: EditRule):
-    value = mf_validator.edit_rule(rule.rule_id, rule.rulename, rule.description, rule.disclaimer)
-    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": "Rule updated successfully !!!" if value == 1 else value}
-    
+    return mf_validator.edit_rule(rule.rule_id, rule.rulename, rule.description, rule.disclaimer)
+
+
 @router.delete("/delete_rule")
-def delete_rule(rule : DeleteRule):
-    value = mf_validator.delete_rule(rule.rule_id)
-    return {"status": "SUCCESS" if value == 1 else "FAILED", "data": "Rule deleted successfully !!!" if value == 1 else value}
-    
+def delete_rule(rule: DeleteRule):
+    return mf_validator.delete_rule(rule.rule_id)
+
 
 @router.post("/get_mapped_rules")
 async def get_mapped_rules(program_id: ProgramId):
-    value, data = mf_validator.get_mapped_rules(program_id.program_id)
-    if value == 1:
-        return {"status": "SUCCESS", "data": data}
-    else:
-        raise HTTPException(status_code=500, detail=data)
+    return mf_validator.get_mapped_rules(program_id.program_id)
+
 
