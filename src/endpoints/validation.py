@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from src import mf_validator
 from fastapi import  File, UploadFile, Form
+from typing import List
 
 import shutil
 import os
@@ -41,32 +42,28 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
 
     
 @router.post("/video_validation")
-async def validation(file: UploadFile = File(...),program_type: str = Form(...), operation: str = Form(...)):
+async def validation(file: UploadFile = File(...), program_type: str = Form(...), operation: List[str] = Form(...)):
     try:
-        print("Operation-->", operation)
         file_location = f"temp_files/{file.filename}"
         os.makedirs(os.path.dirname(file_location), exist_ok=True)
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        print("********************")
-        ###--- frame analysis --- ###
-        # if len(operation)==2:
-        #     response = mf_validator.frame_analysis(file_location,program_type)
-        #     value, data = mf_validator.transcript(file_location, program_type)
 
-        #     return {"status": "SUCCESS" , "data": response}
-        # else:
-        #     if operation[0] == 'frame_analysis':
-        #         response = mf_validator.frame_analysis(file_location,program_type)
-        #         os.remove(file_location)
-        #         return {"status": "SUCCESS" , "data": response}
-            
-        if operation == 'audio_analysis':
-            print("$$$$$$$$$$$$$$$$$$$$$$$$$")
+        if len(operation)==2:
+            response = mf_validator.frame_analysis(file_location,program_type)
             data = mf_validator.transcript(file_location, program_type)
-            os.remove(file_location)
-            # return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
-            return data
+
+            return {{"status": "Frame" , "data": response}, {"status": "Audio" , "data": data}}
+        else:
+            if operation[0] == 'frame_analysis':
+                response = mf_validator.frame_analysis(file_location,program_type)
+                os.remove(file_location)
+                return {"status": "SUCCESS" , "data": response}
+                
+            elif operation[1] == 'audio_analysis':
+                data = mf_validator.transcript(file_location, program_type)
+                os.remove(file_location)
+                return data
     except Exception as e:
         return {"status": "FAILED", "data": str(e)}
 
