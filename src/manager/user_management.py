@@ -140,6 +140,9 @@ class User_Manager:
 
 
         
+            # return {"status": "FAILED", "message": f"Error connecting to PostgreSQL: {error}"}
+
+
     def edit_user(self, first_name, last_name, email, phone_number, role, status):
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')

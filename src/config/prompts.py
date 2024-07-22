@@ -33,3 +33,67 @@ prompt_from_config = '''
         [(rule name_1, question_1),(rule name_2, question_2),(rule name_3, question_3),...]
         below are rules & questions:
         '''
+
+
+
+prompt_template_video_frame = """
+Please analyze the provided text about a mutual fund using the rules specified below and produce a JSON output for each rule.
+
+Dictionary of Rules:
+- Each rule is uniquely identified by a 'rule_id'.
+- Each rule consists of a 'rule_name' and 'rule_definition'.
+
+Instructions:
+
+1. Rule Applicability Check:
+   - Assess if the rule applies by determining the presence of information related to its 'rule_definition'.
+   - Categorize the type of rule:
+     1. Presence Verification: Rules requiring only the confirmation of information presence.
+     2. Information Extraction: Rules requiring specific information to be extracted from the text.
+   - If a rule is not applicable, set 'Applicable' to 'NO' and 'result' to 'No Info'.
+   - If a rule is applicable but does not require extraction, set 'result' to 'No Info'.
+   - If a rule is applicable and requires information extraction, provide the relevant extracted information in 'result'.
+
+2. Output Structure:
+   - Generate a JSON object for each rule with the following format:
+   - Each rule data should be separated by ',' delimeter. It is very important to maintain the strcture output.
+     {{
+       "rule_id": "ID of the rule",
+       "rule_name": "Name of the rule",
+       "Applicable": "YES" or "NO",
+       "result": "No Info" or "<Extracted Information>"
+     }}
+   
+3. Please ensure that the response strictly adheres to the specified JSON format. Dont provide any additional information in output text.
+  there will only contains the data wich is described in output structure.
+
+Detailed Rules Description:
+{rules}
+"""
+
+
+
+
+prompt_template_audio = """Analyzed the provided audio transcription and verify the following rules and provide the information.
+
+                             The provide text is of  audio transcription of mutual fund .:
+                             There are two type of text:
+                             1) JSON_TRANSCRIPT : Text which is with word and there start and end timestamp.
+                             2) PLAIN_TRANSCRIPT: A plain text.
+                             Plese refer JSON_TRANSCRIPT to find out sentence length and use PLAIN_TRANSCRIPT for other rules.
+
+                          1. Output Structure:
+                            - Generate a JSON object for each rule with the following format:
+                            - Each rule data should be separated by ',' delimeter. It is very important to maintain the strcture output.
+                              {{
+                                "rule_id": "ID of the rule",
+                                "rule_name": "Name of the rule",
+                                "Applicable": "YES" or "NO",
+                                "result": "No Info" or "<Extracted Information>"
+                              }}
+                          3. Please ensure that the response strictly adheres to the specified JSON format. Dont provide any additional information in output text.
+                            there will only contains the data wich is described in output structure.
+
+                          Detailed Rules Description:
+                          {rules} 
+"""

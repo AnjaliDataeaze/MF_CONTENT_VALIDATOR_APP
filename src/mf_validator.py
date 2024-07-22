@@ -7,6 +7,9 @@ from src.manager.disclaimer import Disclaimer
 # from src.manager.transcription import Final
 from src.manager.validation import ExtractText
 from src.manager.transcription import Transcrib
+
+
+from src.manager.video_validation import VideoProcessor, S3ImageProcessor, Get_Image_url
 # class validator:
 
 
@@ -70,7 +73,6 @@ def delete_disclaimer(disclaimer_id):
 
 
 def validation(file_path, program_type):
-
     extract1 = ExtractText()
     value, results = extract1.process_image_and_generate_response(file_path=file_path, program_type=program_type)
     if value == 1:
@@ -89,7 +91,7 @@ def gif_validation(file_path, program_type):
 #     value, time = time_difference.flow(input_video)
 #     return value, time
 
-def transcript(input_video):
+def transcript(input_video, progaram_type):
     time_difference = Transcrib()
     value, time = time_difference.duration(input_video)
     return value, time
