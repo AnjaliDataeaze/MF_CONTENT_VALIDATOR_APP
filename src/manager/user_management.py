@@ -18,11 +18,6 @@ class User_Manager:
             query = f"SELECT password, user_id, first_name, last_name, email, phone_number, status, role FROM users WHERE email='{email}'"
             cursor.execute(query)
             row = cursor.fetchone()
-            
-            print(f"Row--->", row)
-            print("++++++++++++++++++++++++++++++++++++++++")
-            row1 = cursor.fetchall()
-            print(f"Row1-->", row1)
             if row is None:
                 return 3
             else:
