@@ -1,11 +1,11 @@
 # manager/config/queries.py
 
 INSERT_PROGRAM = """
-    INSERT INTO program (name, description, created_timestamp, lastupdated_timestamp) 
-    VALUES (%s, %s, %s, %s)
+    INSERT INTO program (name, description, created_by, created_timestamp, lastupdated_timestamp) 
+    VALUES (%s, %s, %s, %s, %s)
 """
 
-SELECT_PROGRAMS = "SELECT name, description, id FROM program order by id ASC ;"
+SELECT_PROGRAMS = "SELECT name, description, id, created_by, created_timestamp FROM program order by id ASC ;"
 
 UPDATE_PROGRAM = """
     UPDATE program
@@ -20,11 +20,11 @@ RULE_ID_RULE_TO_PROGRAM = "SELECT rules_id FROM rule_to_program WHERE program_id
 DELETE_RULENAMES = "DELETE FROM rules WHERE id in %s"
 
 INSERT_RULE = """
-    INSERT INTO rules (rulename, media_type, description, disclaimer, created_timestamp, lastupdated_timestamp) 
-    VALUES (%s, %s, %s, %s, %s, %s)
+    INSERT INTO rules (rulename, media_type, description, disclaimer, created_timestamp, lastupdated_timestamp, assigned_to, rule_status, created_by) 
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
 """
 
-SELECT_RULES = "SELECT id, rulename, media_type, description, disclaimer FROM rules;"
+SELECT_RULES = "SELECT id, rulename, media_type, description, disclaimer, assigned_to, created_by, rule_status, created_timestamp FROM rules order by id ASC;"
 
 UPDATE_RULE = """
     UPDATE rules 
@@ -144,7 +144,7 @@ INSERT_USER = """ INSERT INTO users (email, password, first_name, last_name, pho
                     """
 SELECT_PASSWORD = """SELECT password FROM users WHERE email= %s """
 
-LIST_USER = "SELECT  user_id, first_name, last_name, email, phone_number, role, status  FROM users "
+LIST_USER = "SELECT  user_id, first_name, last_name, email, phone_number, role, status  FROM users order by user_id "
 
 UPDATE_USER = """ UPDATE users SET
                   first_name = %s,
