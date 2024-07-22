@@ -13,8 +13,8 @@ def standard_login( email, password):
 def add_user(email, password, first_name, last_name, phone_number, role, status):
     return manager.add_user(email, password, first_name, last_name, phone_number, role, status)
  
-def list_user():
-    return manager.list_user()
+def list_users():
+    return manager.list_users()
 
 def filter_user(search):
     return manager.filter_user(search=search)
