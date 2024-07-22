@@ -57,6 +57,8 @@ Instructions:
 2. Output Structure:
    - Generate a JSON object for each rule with the following format:
    - Each rule data should be separated by ',' delimeter. It is very important to maintain the strcture output.
+   - Dont generate your own rule id. 
+   - Dont add extra rule information , be with respect to provided rule list.
      {{
        "rule_id": "ID of the rule",
        "rule_name": "Name of the rule",
@@ -78,14 +80,21 @@ prompt_template_audio = """Analyzed the provided audio transcription and verify 
 
                              The provide text is of  audio transcription of mutual fund .:
                              There are two type of text:
-                             1) JSON_TRANSCRIPT : Text which is with word and there start and end timestamp.
-                             2) PLAIN_TRANSCRIPT: A plain text.
+                             1) PLAIN_TRANSCRIPT: A plain text.
+                             2) JSON_TRANSCRIPT : Text which is with word and there start and end timestamp.
+                             Use JSON_TRANSCRIPT to find the legth in second  of provided sentence .
                              Plese refer JSON_TRANSCRIPT to find out sentence length and use PLAIN_TRANSCRIPT for other rules.
 
                           1. Output Structure:
                             - Generate a JSON object for each rule with the following format:
                             - Each rule data should be separated by ',' delimeter. It is very important to maintain the strcture output.
                               {{
+                                "rule_id": "ID of the rule",
+                                "rule_name": "Name of the rule",
+                                "Applicable": "YES" or "NO",
+                                "result": "Time in seconds"
+                              },
+                              {
                                 "rule_id": "ID of the rule",
                                 "rule_name": "Name of the rule",
                                 "Applicable": "YES" or "NO",
