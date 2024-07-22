@@ -53,7 +53,7 @@ app.include_router(validation.router, dependencies=[Depends(get_current_user)])
 
 app.mount("/static", StaticFiles(directory=BUILD_PATH + "/static"), name="static")
 
-@app.get("/programtypes")
+@app.get("/program-types")
 async def program_types(user=Depends(get_current_user)):
     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
@@ -68,6 +68,11 @@ async def rules(user=Depends(get_current_user)):
 @app.get("/validate-content")
 async def validate_content(user=Depends(get_current_user)):
     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+
+@app.get("/validate-video-content")
+async def validate_content(user=Depends(get_current_user)):
+    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+
 
 @app.get("/login")
 async def login():
