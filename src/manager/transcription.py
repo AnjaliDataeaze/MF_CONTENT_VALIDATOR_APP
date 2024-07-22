@@ -111,9 +111,10 @@ class Transcrib:
     #         return prompt
     
     @staticmethod
-    def prompt_for_audio_rule(json_transcript):
-            prompt = f"JSON_TRANSCRIPT-->{json_transcript}\n\n INSTRUCTION-->{prompt_template_audio}"
+    def prompt_for_audio_rule(plain_transcript, word_time_transcript):
+            prompt = f"PLAIN_TRANSCRIPT-->{plain_transcript}\n WORD_TIME --> {word_time_transcript}\n INSTRUCTION-->{prompt_template_audio}"
             return prompt
+    
     @staticmethod
     def generate_message(bedrock_runtime, model_id, system_prompt, messages, max_tokens):
 
@@ -133,7 +134,7 @@ class Transcrib:
 
             return text_value
 
-
+    @staticmethod
     def generate_response(input_text):
             try:
                 bedrock_runtime = boto3.client(service_name='bedrock-runtime',
@@ -148,7 +149,6 @@ class Transcrib:
                 # Prompt with user turn only.
                 user_message =  {"role": "user", "content": input_text}
                 messages = [user_message]
-
                 response =Transcrib().generate_message(bedrock_runtime, model_id, system_prompt, messages, max_tokens)
                 single_string = response  
                 return single_string
@@ -177,7 +177,6 @@ class Transcrib:
 
     def process_audio_transcription(self, file, program_type):
         s3_file = os.path.basename(file)
-        print("S3_file-->", s3_file)
         s3_url = Transcrib().upload_to_aws(file, s3_file)
         if s3_url is None:
             return
@@ -185,20 +184,16 @@ class Transcrib:
         # Define job details
         current_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         job_name = f"transcription_job_{current_time}"
-        print("Job_Name-->", job_name)
         language_code = "en-IN"  # or any appropriate language code
-
-        # Start transcription job
-        transcription_result = Transcrib().start_transcription_job(job_name, s3_url, language_code)
-        print("Transcription result--->", transcription_result)
-
+        plan_transcript, word_time = Transcrib().start_transcription_job(job_name, s3_url, language_code)
         rule_list = Transcrib().list_rules(program_type=program_type)
-
-        print(rule_list)
+        # return rule_list
         ## flow for 5 sec disclaimer
-        p1 = Transcrib().prompt_to_find_of_disclaimer(transcription_result)
+        p1 = Transcrib().prompt_for_audio_rule(plan_transcript, word_time)
         p1_response = Transcrib().generate_response(p1)
-        
+        print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+        print(p1_response)
+        return p1_response
         # p2 = Transcrib().
         # # Find the statement duration
         # word_count = 14
