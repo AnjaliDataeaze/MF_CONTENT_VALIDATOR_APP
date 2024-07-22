@@ -12,6 +12,7 @@ from src.config.credentials import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIR
 from src.endpoints import program, validation, user_management
 from src.endpoints import rule_endpoint
 from src.mf_user_management import standard_login
+# from src.mf_validator import frame_analysis
 from fastapi import Form, HTTPException, Response
 from pydantic import BaseModel
 from starlette.status import HTTP_302_FOUND
@@ -49,7 +50,9 @@ def logout(request: Request):
 app.include_router(rule_endpoint.router, dependencies=[Depends(get_current_user)])
 app.include_router(program.router, dependencies=[Depends(get_current_user)])
 app.include_router(user_management.router, dependencies=[Depends(get_current_user)])
-app.include_router(validation.router, dependencies=[Depends(get_current_user)])
+app.include_router(validation.router)
+
+# app.include_router(validation.router, dependencies=[Depends(get_current_user)])
 
 app.mount("/static", StaticFiles(directory=BUILD_PATH + "/static"), name="static")
 
