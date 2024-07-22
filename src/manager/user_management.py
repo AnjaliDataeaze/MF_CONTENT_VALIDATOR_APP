@@ -139,9 +139,7 @@ class User_Manager:
             return {"body": {"status": "FAILED", "message": f"Error connecting to PostgreSQL: {error}"}, "statusCode": 500}
 
 
-        
-            # return {"status": "FAILED", "message": f"Error connecting to PostgreSQL: {error}"}
-
+                    # return {"status": "FAILED", "message": f"Error connecting to PostgreSQL: {error}"}
 
     def edit_user(self, first_name, last_name, email, phone_number, role, status):
         try:
