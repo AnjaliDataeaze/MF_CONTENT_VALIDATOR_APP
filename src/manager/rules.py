@@ -176,4 +176,13 @@ class Rules:
                 conn.rollback()
             return {"status": "FAILED", "data": f"Error: {error}"}
 
-
+    @staticmethod
+    def change_rule_status(rule_id, status):
+        try:
+            cursor.execute("UPDATE rules SET rule_status = %s WHERE rule_id = %s", (status, rule_id))
+            conn.commit()
+            return {"status": "SUCCESS", "data": "Rule status updated successfully !!!"}
+        except Exception as error:
+            if conn:
+                conn.rollback()
+            return {"status": "FAILED", "data": f"Error connecting to PostgreSQL: {error}"}

@@ -1,5 +1,3 @@
-# manager/main.py
-
 import psycopg2
 from datetime import datetime
 from src.config.queries import DELETE_RULE_TO_PROGRAM_FROM_PROGRAM, PROGRAM_ID,INSERT_PROGRAM, SELECT_PROGRAMS, UPDATE_PROGRAM, DELETE_PROGRAM, RULE_ID_RULE_TO_PROGRAM, DELETE_PROGRAM_TO_RULE,DELETE_RULENAMES_1
@@ -19,8 +17,6 @@ class Program:
         self.name = name
         self.description = description
         self.rules = rules
-        self.created_by = created_by
-    
     @staticmethod
     def add_program(name, description, rules, created_by):
         try:
@@ -50,7 +46,8 @@ class Program:
         try:
             cursor.execute(SELECT_PROGRAMS)
             programs = cursor.fetchall()
-
+            print("Fetched Programs:  ",programs)
+            conn.commit()
             # Process fetched program records into the desired JSON format
             fetched_programs = [
                 {
@@ -71,9 +68,13 @@ class Program:
                 },
                 "statusCode": 200
             }
+           #  conn.commit()
             return response
         
         except Exception as error:
+            if conn:
+                conn.rollback()
+           # return {"status": "FAILED", "data": f"Error: {error}"}
             return {"body": {"status": "failed", "data": str(error)}, "statusCode": 500}
 
 

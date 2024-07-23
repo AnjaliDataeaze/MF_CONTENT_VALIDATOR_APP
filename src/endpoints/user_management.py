@@ -69,4 +69,3 @@ async def edit_user(edit: EditUser):
 @router.delete("/delete_user")
 async def delete_user(Delete: DeleteUser):
     return mf_user_management.delete_user(Delete.user_id)
-

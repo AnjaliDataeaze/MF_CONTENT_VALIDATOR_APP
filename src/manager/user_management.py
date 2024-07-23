@@ -23,16 +23,18 @@ class User_Manager:
             else:
                 saved_password = row[0]
                 if saved_password == password:
+                    print("***************************8")
                     details =[]
                     for i in range(1, len(row)):
                         details.append(row[i])
                     return 1 , details
                 else:
-                    return 2 , details
+                    return 2 , None
                 
         except Exception as error:
             if conn:
                 conn.rollback()
+            print("Eroor-->", str(error))
             return f"Error connecting to PostgreSQL: {error}"
 
 
@@ -161,4 +163,3 @@ class User_Manager:
             if conn:
                 conn.rollback()
             return {"status": "FAILED", "data": f"Error connecting to PostgreSQL: {error}"}
-

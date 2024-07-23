@@ -48,7 +48,8 @@ def delete_rule(rule_id):
 def get_mapped_rules(program_id):
     return Rules.get_mapped_rules(program_id)
 
-
+def change_rule_status(rule_id, status):
+    return Rules.change_rule_status(rule_id, status)
 # ------------------------------------------------------------#
 
 
@@ -93,8 +94,8 @@ def gif_validation(file_path, program_type):
 
 def transcript(input_video, program_type):
     transcription = Transcrib()
-    data = transcription.process_audio_transcription(input_video,program_type)
-    return data
+    data1, data2 = transcription.process_audio_transcription(input_video,program_type)
+    return data1, data2
 
 def frame_analysis(input_video, program_type):
     frame = VideoProcessor(input_video)
