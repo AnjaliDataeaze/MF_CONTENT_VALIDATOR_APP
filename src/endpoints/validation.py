@@ -28,15 +28,10 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
             value, response = mf_validator.validation(file_location, program_type)
             os.remove(file_location)
             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
-        # elif media_type == "Video":
-        #     value, data = mf_validator.transcript(file_location)
-        #     os.remove(file_location)
-        #     return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
         elif media_type =="GIF":
             value, response = mf_validator.gif_validation(file_location, program_type)
             os.remove(file_location)
             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
-        
     except Exception as e:
         return {"status": "FAILED", "data": str(e)}
 
@@ -51,19 +46,20 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
 
         if len(operation)==2:
             response = mf_validator.frame_analysis(file_location,program_type)
-            data = mf_validator.transcript(file_location, program_type)
-
-            return {{"status": "Frame" , "data": response}, {"status": "Audio" , "data": data}}
+            data1, data2 = mf_validator.transcript(file_location, program_type)
+            os.remove(file_location)
+            return {{"status": "frame" , "data": response}, {"status": "audio" , "Data": {"Data1": data1, "Data2":data2}}}
         else:
             if operation[0] == 'frame_analysis':
                 response = mf_validator.frame_analysis(file_location,program_type)
                 os.remove(file_location)
                 return {"status": "SUCCESS" , "data": response}
-                
-            elif operation[1] == 'audio_analysis':
-                data = mf_validator.transcript(file_location, program_type)
+            
+            elif operation[0] == 'audio_analysis':
+                print("calling Audio analysis")
+                data1, data2 = mf_validator.transcript(file_location, program_type)
                 os.remove(file_location)
-                return data
+                return {"Data1":data1,"Data2": data2}
     except Exception as e:
         return {"status": "FAILED", "data": str(e)}
 

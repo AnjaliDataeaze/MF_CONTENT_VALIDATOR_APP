@@ -1,12 +1,9 @@
-# manager/config/queries.py
-
 INSERT_PROGRAM = """
     INSERT INTO program (name, description, created_timestamp, lastupdated_timestamp) 
     VALUES (%s, %s, %s, %s)
 """
 
-SELECT_PROGRAMS = "SELECT name, description, id FROM program order by id ASC ;"
-
+SELECT_PROGRAMS = "SELECT name, description, id, created_by, created_timestamp FROM program order by id ASC ;"
 UPDATE_PROGRAM = """
     UPDATE program
     SET name = %s, description = %s, lastupdated_timestamp = %s
@@ -20,8 +17,8 @@ RULE_ID_RULE_TO_PROGRAM = "SELECT rules_id FROM rule_to_program WHERE program_id
 DELETE_RULENAMES = "DELETE FROM rules WHERE id in %s"
 
 INSERT_RULE = """
-    INSERT INTO rules (rulename, media_type, description, disclaimer, created_timestamp, lastupdated_timestamp) 
-    VALUES (%s, %s, %s, %s, %s, %s)
+    INSERT INTO rules (rulename, media_type, description, disclaimer, created_timestamp, lastupdated_timestamp, assigned_to, rule_status, created_by) 
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
 """
 
 SELECT_RULES = "SELECT id, rulename, media_type, description, disclaimer FROM rules;"

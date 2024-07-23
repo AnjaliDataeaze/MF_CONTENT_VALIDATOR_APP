@@ -27,6 +27,10 @@ class ListRulesByProgram(BaseModel):
 class ProgramId(BaseModel):
     program_id: int
 
+class ChangeRuleStatusRequest(BaseModel):
+    rule_id: int
+    status: str
+
 
 @router.get("/list_rules")
 def list_rules(status: str = None):
@@ -57,4 +61,10 @@ def delete_rule(rule: DeleteRule):
 async def get_mapped_rules(program_id: ProgramId):
     return mf_validator.get_mapped_rules(program_id.program_id)
 
-
+@router.post("/change_rule_status")
+def change_rule_status(request: ChangeRuleStatusRequest):
+    try:
+        return mf_validator.change_rule_status(request.rule_id, request.status)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+   
