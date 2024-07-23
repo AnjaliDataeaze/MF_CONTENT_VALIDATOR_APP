@@ -42,4 +42,3 @@ async def edit_program(program: EditProgram):
 def delete_program(program: DeleteProgram):
     return mf_validator.delete_program(program.program_id)
 
-
