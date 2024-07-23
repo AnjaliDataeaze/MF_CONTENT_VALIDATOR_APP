@@ -7,54 +7,51 @@ from src.manager.disclaimer import Disclaimer
 # from src.manager.transcription import Final
 from src.manager.validation import ExtractText
 from src.manager.transcription import Transcrib
+
+
+from src.manager.video_validation import VideoProcessor, S3ImageProcessor, Get_Image_url
 # class validator:
-def add_program(name, description, rules):
-    program = Program(name, description, rules)
-    return program.add_program()
+
+
+def add_program(name, description, rules, created_by):
+    return Program.add_program(name, description, rules, created_by)
 
 def list_programs():
     return Program.list_programs()
 
-
-def filter_rules(search):
-    return Rules.filter_rules(search)
-
 def edit_program(program_id, name, description, rules):
-    program = Program("", "", "")
-    #program = Program(program_id, name, description, rules)
-    return program.edit_program(program_id, name, description, rules)
+    return Program.edit_program(program_id, name, description, rules)
 
 
 def delete_program(program_id):
-    program = Program("", "", "" )
-    return program.delete_program(program_id)
+    return Program.delete_program(program_id)
+
 
 # ------------------------------------------------------------#
 
 
-def add_rule(rulename, media_type, description, disclaimer):
-    rule = Rules(rulename, media_type, description, disclaimer)
-    return rule.add_rule()
+def add_rule(rulename, media_type, description, disclaimer, assigned_to, ruleStatus, created_by):
+    return Rules.add_rule(rulename, media_type, description, disclaimer, assigned_to, ruleStatus, created_by)
 
-def list_rules():
-    return Rules.list_rules()
+def list_rules(status):
+    return Rules.list_rules(status)
+
+def filter_rules(search, status=None):
+    return Rules.filter_rules(search, status)
 
 def edit_rule(rule_id, rulename, description, disclaimer):
-    rule = Rules("", "", "", "")
-    return rule.edit_rule(rule_id, rulename, description, disclaimer)
+    return Rules.edit_rule(rule_id, rulename, description, disclaimer)
 
 def delete_rule(rule_id):
-    rule = Rules("","", "", "")
-    return rule.delete_rule(rule_id)
-
-def list_rules_by_program(program_id):
-    return Rules.list_rules_by_program(program_id)
+    return Rules.delete_rule(rule_id)
 
 def get_mapped_rules(program_id):
-    rule = Rules("","", "", "")
-    return rule.get_mapped_rules(program_id)
+    return Rules.get_mapped_rules(program_id)
 
+def change_rule_status(rule_id, status):
+    return Rules.change_rule_status(rule_id, status)
 # ------------------------------------------------------------#
+
 
 def add_disclaimer(rule_id, actual_disclaimer):    
     disclaimer = Disclaimer()
@@ -72,11 +69,11 @@ def delete_disclaimer(disclaimer_id):
     disclaimer = Disclaimer()
     return disclaimer.delete_disclaimer(disclaimer_id)
 
+
 # --------------------------- Validation ---------------------------------------- #
 
 
 def validation(file_path, program_type):
-
     extract1 = ExtractText()
     value, results = extract1.process_image_and_generate_response(file_path=file_path, program_type=program_type)
     if value == 1:
@@ -95,7 +92,14 @@ def gif_validation(file_path, program_type):
 #     value, time = time_difference.flow(input_video)
 #     return value, time
 
-def transcript(input_video):
-    time_difference = Transcrib()
-    value, time = time_difference.duration(input_video)
-    return value, time
+def transcript(input_video, program_type):
+    transcription = Transcrib()
+    data1, data2 = transcription.process_audio_transcription(input_video,program_type)
+    return data1, data2
+
+def frame_analysis(input_video, program_type):
+    frame = VideoProcessor(input_video)
+    frame.process_video()
+    image  = S3ImageProcessor(program_type=program_type)
+    data = image.process_images()
+    return data

@@ -12,116 +12,177 @@ except Exception as error:
     print(f"Error connecting to PostgreSQL: {error}")
     exit()
 
-#Rules(rulename, media_type, description, program_type, disclaimer)
+
 class Rules:   
-    def __init__(self, rulename, media_type, description, disclaimer):
+    def __init__(self, rulename, media_type, description, disclaimer, assigned_to, ruleStatus, created_by):
         self.rulename = rulename
         self.description = description
         self.disclaimer = disclaimer
         self.media_type = media_type
+        self.assigned_to = assigned_to
+        self.ruleStatus = ruleStatus
+        self.created_by = created_by
+    
 
-    def add_rule(self):
+    @staticmethod
+    def add_rule(rulename, media_type, description, disclaimer, assigned_to, ruleStatus, created_by):
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            values = (self.rulename, self.media_type, self.description, self.disclaimer, now, now)
+            values = (rulename, media_type, description, disclaimer, now, now, assigned_to, ruleStatus, created_by)
             cursor.execute(INSERT_RULE, values)
-
-            # cursor.execute(PROGRAM_ID, (self.program_type,)) 
-            # program_id = cursor.fetchone()
-            # if program_id is None:
-            #     return "No program found"
-            # cursor.execute(RULE_ID, (self.rulename,))
-            # rule_id = cursor.fetchone()[0]
-            # values2 = (program_id, rule_id, now, now)
-            # cursor.execute(INSERT_RULE_TO_PROGRAM, values2)
             conn.commit()
-            return 1
+            return {"status": "SUCCESS", "data": "Rule updated successfully !!!"}
         except Exception as error:
-            return f"Error connecting to PostgreSQL: {error}"
+            return {"status": "FAILED", "data": f"Error: {error}"}
 
 
-        
+
     @staticmethod
-    def list_rules():
-        try:
-            cursor.execute(SELECT_RULES)
-            rules = cursor.fetchall()
-            return 1, rules
-        except Exception as error:
-            return 2, f"Error connecting to PostgreSQL: {error}"
-
-    def edit_rule(self, rule_id, new_rulename, new_description, new_disclaimer ):
+    def edit_rule(rule_id, new_rulename, new_description, new_disclaimer):
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             values = (new_rulename, new_description, new_disclaimer, now, rule_id)
-            print("values",values)
+            print("values", values)
             cursor.execute(UPDATE_RULE, values)
             conn.commit()
-            return 1
+            return {"status": "SUCCESS", "data": "Rule updated successfully !!!"}
         except Exception as error:
-            return f"Error: {error}"
+            return {"status": "FAILED", "data": f"Error: {error}"}
 
-    def delete_rule(self, rule_id):
+
+    @staticmethod
+    def delete_rule(rule_id):
         try:
-            print("Rule id from fornt end:",rule_id)
-            cursor.execute(DELETE_RULE_TO_PROGRAM,(rule_id,))
+            print("Rule id from frontend:", rule_id)
+            cursor.execute(DELETE_RULE_TO_PROGRAM, (rule_id,))
             cursor.execute(DELETE_RULE, (rule_id,))
             conn.commit()
-            return 1
+            return {"status": "SUCCESS", "data": "Rule deleted successfully !!!"}
         except Exception as error:
-            return f"Error: {error}"
+            return {"status": "FAILED", "data": f"Error: {error}"}
 
-    def add_rule_to_program(self, rule_id, program_id):
+
+
+    @staticmethod
+    def list_rules(status=None):
         try:
-            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            values = (program_id, rule_id, now, now)
-            cursor.execute(INSERT_RULE_TO_PROGRAM, values)
+            if status:
+                query = """
+                    SELECT id, rulename, media_type, description, disclaimer, 
+                    assigned_to, created_by, rule_status, created_timestamp 
+                    FROM rules 
+                    WHERE rule_status = %s 
+                    ORDER BY id ASC;
+                """
+                cursor.execute(query, (status,))
+            else:
+                query = """
+                    SELECT id, rulename, media_type, description, disclaimer, 
+                    assigned_to, created_by, rule_status, created_timestamp 
+                    FROM rules 
+                    ORDER BY id ASC;
+                """
+                cursor.execute(query)
+            
+            rules = cursor.fetchall()
+
+            # Convert to a list of dictionaries for JSON serialization
+            rules_list = [
+                {
+                    "rule_id": rule[0],
+                    "rulename": rule[1],
+                    "media_type": rule[2],
+                    "description": rule[3],
+                    "disclaimer": rule[4],
+                    "assigned_to": rule[5],
+                    "created_by": rule[6],
+                    "rule_status": rule[7],
+                    "created_timestamp": rule[8],
+                }
+                for rule in rules
+            ]
+
             conn.commit()
-            return 1
-        except Exception as error:
-            return f"Error : {error}"
 
-    @staticmethod
-    def list_rules_by_program(program_id):
-        try:
-            cursor.execute(SELECT_RULES_BY_PROGRAM, (program_id,))
-            rules = cursor.fetchall()
-            return 1, rules
-        except Exception as error:
-            return 2,f"Error : {error}"
-
-
-    @staticmethod
-    def filter_rules(search):
-        try:
-            SELECT_RULES_BY_SEARCH = """
-            SELECT id, rulename, media_type, description, disclaimer
-            FROM rules
-            WHERE rulename ILIKE %s OR media_type ILIKE %s
-            """
-
-            cursor.execute(SELECT_RULES_BY_SEARCH, (f"%{search}%", f"%{search}%"))
-            rules = cursor.fetchall()
-            return 1, rules
-        except Exception as error:
-            return 2, f"Error connecting to PostgreSQL: {error}"
-
-
-    def get_mapped_rules(self, program_id):
-        conn = None
-        cursor = None
-        try:
-            conn = psycopg2.connect(**db_config)
-            cursor = conn.cursor()
-            cursor.execute(SELECT_MAPPED_RULES, (program_id,))
-            rules = cursor.fetchall()
-            return 1, rules
+            return {"status": "SUCCESS", "data": rules_list}
         except Exception as error:
             if conn:
                 conn.rollback()
-            return 2, f"Error: {error}"
-        finally:
-            if cursor:
-                cursor.close()
+            return {"status": "FAILED", "data": f"Error connecting to PostgreSQL: {error}"}
+
+
+    @staticmethod
+    def filter_rules(term, status=None):
+        try:
+            if status and status in ['approved', 'pending', 'declined']:
+                query = """
+                    SELECT id, rulename, media_type, description, disclaimer,
+                    assigned_to, created_by, rule_status, created_timestamp
+                    FROM rules
+                    WHERE (rulename ILIKE %s OR description ILIKE %s) AND rule_status = %s
+                    ORDER BY id ASC;
+                """
+                cursor.execute(query, (f'%{term}%', f'%{term}%', status))
+            else:
+                query = """
+                    SELECT id, rulename, media_type, description, disclaimer,
+                    assigned_to, created_by, rule_status, created_timestamp
+                    FROM rules
+                    WHERE rulename ILIKE %s OR description ILIKE %s
+                    ORDER BY id ASC;
+                """
+                cursor.execute(query, (f'%{term}%', f'%{term}%'))
+            rules = cursor.fetchall()
+            rules_list = [
+                {
+                    "rule_id": rule[0],
+                    "rulename": rule[1],
+                    "media_type": rule[2],
+                    "description": rule[3],
+                    "disclaimer": rule[4],
+                    "assigned_to": rule[5],
+                    "created_by": rule[6],
+                    "rule_status": rule[7],
+                    "created_timestamp": rule[8]
+                }
+                for rule in rules
+            ]
+            return {"status": "SUCCESS", "data": rules_list}
+        except Exception as error:
+            return {"status": "FAILED", "data": f"Error connecting to PostgreSQL: {error}"}
+
+
+
+    @staticmethod
+    def get_mapped_rules(program_id):
+        try:
+            cursor.execute(SELECT_MAPPED_RULES, (program_id,))
+            rules = cursor.fetchall()
+            
+            # Convert the result to a list of dictionaries
+            rules_list = [
+                {
+                    "rule_id": rule[0],
+                    "rulename": rule[1],
+                    "media_type": rule[2],
+                    "disclaimer": rule[3]
+                }
+                for rule in rules
+            ]
+            conn.commit()
+            return {"status": "SUCCESS", "data": rules_list}
+        except Exception as error:
             if conn:
-                conn.close()
+                conn.rollback()
+            return {"status": "FAILED", "data": f"Error: {error}"}
+
+    @staticmethod
+    def change_rule_status(rule_id, status):
+        try:
+            cursor.execute("UPDATE rules SET rule_status = %s WHERE rule_id = %s", (status, rule_id))
+            conn.commit()
+            return {"status": "SUCCESS", "data": "Rule status updated successfully !!!"}
+        except Exception as error:
+            if conn:
+                conn.rollback()
+            return {"status": "FAILED", "data": f"Error connecting to PostgreSQL: {error}"}

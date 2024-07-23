@@ -1,52 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter
 from src import mf_validator
-from pydantic import BaseModel
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import  File, UploadFile, Form
+from typing import List
+
 import shutil
 import os
-from src.dependency import get_current_user
-from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
+
 
 router = APIRouter()
 
-
-# @router.post("/validation")
-# async def validation(file: UploadFile = File(...), program_type: str = Form(...), media_type: str = Form(...)):
-#     if get_current_user == 1:
-#         try:
-#             file_location = f"temp_files/{file.filename}"
-#             # Ensure the directory exists
-#             os.makedirs(os.path.dirname(file_location), exist_ok=True)
-
-#             # Save the file to the specified location
-#             with open(file_location, "wb") as buffer:
-#                 shutil.copyfileobj(file.file, buffer)
-            
-#             if media_type =="pdf":
-#                 value, response = mf_validator.validation(file_location, program_type)
-#                 # list_2d = [inner for outer in response for inner in outer]
-#                 os.remove(file_location)
-#                 return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
-#             elif media_type == "Video":
-#                 value, data = mf_validator.transcript(file_location)
-#                 os.remove(file_location)
-#                 return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
-#             # Delete the file after processing
-            
-#         except Exception as e:
-#             return {"status": "FAILED", "data": str(e)}
-
-#     else:
-#         return RedirectResponse(url='/login')
-    
+class S3Key(BaseModel):
+    key: str
 
 
 @router.post("/validation")
 async def validation(file: UploadFile = File(...), program_type: str = Form(...), media_type: str = Form(...)):
-    # if get_current_user == 1:
     try:
         file_location = f"temp_files/{file.filename}"
-        # Ensure the directory exists
         os.makedirs(os.path.dirname(file_location), exist_ok=True)
 
         # Save the file to the specified location
@@ -57,18 +28,46 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
             value, response = mf_validator.validation(file_location, program_type)
             os.remove(file_location)
             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
-        elif media_type == "Video":
-            value, data = mf_validator.transcript(file_location)
-            os.remove(file_location)
-            return {"status": "SUCCESS" if value == 1 else "FAILED", "data": data}
         elif media_type =="GIF":
             value, response = mf_validator.gif_validation(file_location, program_type)
             os.remove(file_location)
             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
-        
     except Exception as e:
         return {"status": "FAILED", "data": str(e)}
 
-    # else:
-    #     return RedirectResponse(url='/login')
+    
+@router.post("/video_validation")
+async def validation(file: UploadFile = File(...), program_type: str = Form(...), operation: List[str] = Form(...)):
+    try:
+        file_location = f"temp_files/{file.filename}"
+        os.makedirs(os.path.dirname(file_location), exist_ok=True)
+        with open(file_location, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        if len(operation)==2:
+            response = mf_validator.frame_analysis(file_location,program_type)
+            data1, data2 = mf_validator.transcript(file_location, program_type)
+            os.remove(file_location)
+            return {{"status": "frame" , "data": response}, {"status": "audio" , "Data": {"Data1": data1, "Data2":data2}}}
+        else:
+            if operation[0] == 'frame_analysis':
+                response = mf_validator.frame_analysis(file_location,program_type)
+                os.remove(file_location)
+                return {"status": "SUCCESS" , "data": response}
+            
+            elif operation[0] == 'audio_analysis':
+                print("calling Audio analysis")
+                data1, data2 = mf_validator.transcript(file_location, program_type)
+                os.remove(file_location)
+                return {"Data1":data1,"Data2": data2}
+    except Exception as e:
+        return {"status": "FAILED", "data": str(e)}
+
+
+@router.post("/gets3image")
+async def gets3image(s3key:S3Key):
+    response = mf_validator.get_image_url(s3key.key)
+    return {"status": "SUCCESS" , "data": response}
+        
+        
     
