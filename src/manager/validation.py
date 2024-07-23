@@ -1,25 +1,23 @@
 from __future__ import annotations
+from botocore.exceptions import ClientError
+from PIL import Image
+from datetime import datetime
+from typing import List
 import boto3
 import json
 import logging
-from botocore.exceptions import ClientError
 import psycopg2
 import fitz  # PyMuPDF
-from PIL import Image
 import io
-from src.config.credentials import aws_access_key_id, aws_secret_access_key, db_config, region_name
-from src.config.queries import GET_PROGRAM_ID, GET_Rule_ID_ASSOCIATED_WITH_PROGRAM, GET_DECRIPTION_FOR_RULE_ID, RETURN_OUTPUT, CREATE_SEQUENCE_GROUP_ID,NEXTVAL_GROUP_ID, INSERT_OUTPUT
-from src.config.prompts import prompt_from_config
-from botocore.exceptions import NoCredentialsError
 import os
-from datetime import datetime
 import ast
 import imageio
 import numpy as np
 import cv2
-from typing import List
 from botocore.exceptions import NoCredentialsError
-from PIL import Image
+from src.config.credentials import aws_access_key_id, aws_secret_access_key, db_config, region_name
+from src.config.queries import GET_PROGRAM_ID, GET_Rule_ID_ASSOCIATED_WITH_PROGRAM, GET_DECRIPTION_FOR_RULE_ID, RETURN_OUTPUT, CREATE_SEQUENCE_GROUP_ID,NEXTVAL_GROUP_ID, INSERT_OUTPUT
+from src.config.prompts import prompt_from_config
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -114,8 +112,8 @@ class ExtractText:
         for item in response["Blocks"]:
             if item["BlockType"] == "LINE":
                 text += item["Text"] + "\n"
-        print(text)
         return text
+    
     @staticmethod
     def convert_pdf_to_images(pdf_path):
         # Open the PDF file
@@ -169,6 +167,7 @@ class ExtractText:
         text_value = response_body['content'][0]['text']
 
         return text_value
+    
 
     @staticmethod
     def generate_response(input_text):

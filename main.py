@@ -12,6 +12,7 @@ from src.config.credentials import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIR
 from src.endpoints import program, validation, user_management
 from src.endpoints import rule_endpoint
 from src.mf_user_management import standard_login
+# from src.mf_validator import frame_analysis
 from fastapi import Form, HTTPException, Response
 from pydantic import BaseModel
 from starlette.status import HTTP_302_FOUND
@@ -27,15 +28,15 @@ def get_current_user(request: Request):
     return user
 
 class UserLogin(BaseModel):
-    email: str
+    email: str   
     password: str
 
 @app.post("/user-login")
 async def user_login(request: Request,logIn: UserLogin):
-    value = standard_login(logIn.email, logIn.password)
+    value, data = standard_login(logIn.email, logIn.password)
     if value == 1:
         request.session['user'] = logIn.email  # Save user session
-        return {"status": "SUCCESS"}
+        return {"status": "SUCCESS", "data":data }
     return {"status": "FAILED", "data": "unknown error."}
 
 @app.get('/logout')
@@ -49,11 +50,13 @@ def logout(request: Request):
 app.include_router(rule_endpoint.router, dependencies=[Depends(get_current_user)])
 app.include_router(program.router, dependencies=[Depends(get_current_user)])
 app.include_router(user_management.router, dependencies=[Depends(get_current_user)])
-app.include_router(validation.router, dependencies=[Depends(get_current_user)])
+app.include_router(validation.router)
+
+# app.include_router(validation.router, dependencies=[Depends(get_current_user)])
 
 app.mount("/static", StaticFiles(directory=BUILD_PATH + "/static"), name="static")
 
-@app.get("/programtypes")
+@app.get("/program-types")
 async def program_types(user=Depends(get_current_user)):
     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
@@ -69,9 +72,19 @@ async def rules(user=Depends(get_current_user)):
 async def validate_content(user=Depends(get_current_user)):
     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
+@app.get("/validate-video-content")
+async def validate_content(user=Depends(get_current_user)):
+    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+
+
 @app.get("/login")
 async def login():
     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+
+@app.get("/")
+async def root(user=Depends(get_current_user)):
+    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+
 
 if __name__ == '__main__':
     import uvicorn
