@@ -179,7 +179,7 @@ class Rules:
     @staticmethod
     def change_rule_status(rule_id, status):
         try:
-            cursor.execute("UPDATE rules SET rule_status = %s WHERE rule_id = %s", (status, rule_id))
+            cursor.execute("UPDATE rules SET rule_status = %s WHERE id = %s", (status, rule_id))
             conn.commit()
             return {"status": "SUCCESS", "data": "Rule status updated successfully !!!"}
         except Exception as error:

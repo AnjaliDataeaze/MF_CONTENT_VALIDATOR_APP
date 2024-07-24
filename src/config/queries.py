@@ -159,5 +159,11 @@ SELECT_RULES_BY_PROGRAM_VIDEO = """
     SELECT r.id, r.rulename, r.disclaimer
     FROM rules r
     JOIN rule_to_program rp ON r.id = rp.rules_id
-    WHERE rp.program_id = %s AND r.media_type = %s
+    WHERE rp.program_id = %s AND r.media_type = 'Video' and r.media_type = 'pdf'
 """
+
+SELECT_RULES_BY_PROGRAM_AUDIO = """
+    SELECT r.id, r.rulename, r.disclaimer
+    FROM rules r
+    JOIN rule_to_program rp ON r.id = rp.rules_id
+    WHERE rp.program_id = %s AND r.media_type = 'audio' """

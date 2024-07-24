@@ -94,8 +94,8 @@ def gif_validation(file_path, program_type):
 
 def transcript(input_video, program_type):
     transcription = Transcrib()
-    data1, data2 = transcription.process_audio_transcription(input_video,program_type)
-    return data1, data2
+    return transcription.process_audio_transcription(input_video,program_type)
+     
 
 def frame_analysis(input_video, program_type):
     # frame = VideoProcessor(input_video)

@@ -50,9 +50,9 @@ Instructions:
    - Categorize the type of rule:
      1. Presence Verification: Rules requiring only the confirmation of information presence.
      2. Information Extraction: Rules requiring specific information to be extracted from the text.
-   - If a rule is not applicable, set 'Applicable' to 'NO' and 'result' to 'No Info'.
-   - If a rule is applicable but does not require extraction, set 'result' to 'No Info'.
-   - If a rule is applicable and requires information extraction, provide the relevant extracted information in 'result'.
+   - If a rule is not present in context then , set 'Validation_result' to 'NO' and 'Validation_comment' to 'No Info'.
+   - If a rule is Present but does not require extraction then set 'Validation_result' to 'YES' and set 'Validation_comment' to 'No Info'.
+   - If a rule is Present and requires information extraction,then set 'Validation_result' to 'YES'and  provide the relevant extracted information in 'Validation-Comment'.
 
 2. Output Structure:
    - Generate a JSON object for each rule with the following format:
@@ -62,8 +62,9 @@ Instructions:
      {{
        "rule_id": "ID of the rule",
        "rule_name": "Name of the rule",
-       "Applicable": "YES" or "NO",
-       "result": "No Info" or "<Extracted Information>"
+       "rule_defination" : "Defination of rule"
+       "Validation_result": "YES" or "NO",
+       "Validation_comment": "No Info" or "<Extracted Information>"
      }}
    
 3. Please ensure that the response strictly adheres to the specified JSON format. Dont provide any additional information in output text.
@@ -72,41 +73,6 @@ Instructions:
 Detailed Rules Description:
 {rules}
 """
-
-
-
-
-prompt_template_audio = """Analyzed the provided audio transcription and verify the following rules and provide the information.
-
-                             The provide text is of  audio transcription of mutual fund .:
-                             There are two type of text:
-                             1) PLAIN_TRANSCRIPT: A plain text.
-                             2) JSON_TRANSCRIPT : Text which is with word and there start and end timestamp.
-                             Use JSON_TRANSCRIPT to find the legth in second  of provided sentence .
-                             Plese refer JSON_TRANSCRIPT to find out sentence length and use PLAIN_TRANSCRIPT for other rules.
-
-                          1. Output Structure:
-                            - Generate a JSON object for each rule with the following format:
-                            - Each rule data should be separated by ',' delimeter. It is very important to maintain the strcture output.
-                              {{
-                                "rule_id": "ID of the rule",
-                                "rule_name": "Name of the rule",
-                                "Applicable": "YES" or "NO",
-                                "result": "Time in seconds"
-                              },
-                              {
-                                "rule_id": "ID of the rule",
-                                "rule_name": "Name of the rule",
-                                "Applicable": "YES" or "NO",
-                                "result": "No Info" or "<Extracted Information>"
-                              }}
-                          3. Please ensure that the response strictly adheres to the specified JSON format. Dont provide any additional information in output text.
-                            there will only contains the data wich is described in output structure.
-
-                          Detailed Rules Description:
-                          {rules} 
-"""
-
 
 
 prompt_template_audio_duration = """

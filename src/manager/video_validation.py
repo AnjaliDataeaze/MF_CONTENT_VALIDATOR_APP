@@ -262,6 +262,7 @@ class S3ImageProcessor:
     def process_images(self):
         s3_files = self.list_s3_files()
         rules = self.list_rules()
+        print("Rules")
         rules_str = json.dumps(rules, indent=4)
         try:
             prompt = prompt_template_video_frame.format(rules=rules_str)
@@ -287,7 +288,7 @@ class S3ImageProcessor:
                         parsed_response = response  # Directly use the list
 
                     print("Parsed the data successfully.")
-                    keep_response = any(item['Applicable'] == 'YES' for item in parsed_response)
+                    keep_response = any(item['Validation_result'] == 'YES' for item in parsed_response)
 
                     if keep_response:
                         # Include the response with filename and results
