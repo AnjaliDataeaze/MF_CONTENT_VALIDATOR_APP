@@ -214,6 +214,7 @@ class S3ImageProcessor:
             program_id = cursor.fetchone()[0] 
             cursor.execute(SELECT_RULES_BY_PROGRAM_VIDEO, (program_id,))
             rules = cursor.fetchall()
+            print("List of rules-->", rules)
             dictionary = {item[0]: (item[1], item[2]) for item in rules}
             return dictionary           
         except Exception as e:
@@ -234,6 +235,7 @@ class S3ImageProcessor:
             "system": self.system_prompt,
             "messages": messages
         })
+
         response = self.bedrock_runtime.invoke_model(body=body, modelId=self.model_id)
         response_body_str = response.get('body').read()
         response_body = json.loads(response_body_str)
@@ -246,13 +248,41 @@ class S3ImageProcessor:
             messages = [user_message]
             response_text = self.generate_message(messages)
             print("Response from bedrock--> ", response_text)
-            valid_json_string = '[' + response_text.strip().replace('}\n{', '},\n{') + ']'
-            parsed_json = json.loads(valid_json_string)
-            return parsed_json
+
+            # Attempt to parse as JSON array directly
+            try:
+                parsed_json = json.loads(response_text)
+                if isinstance(parsed_json, list):
+                    return parsed_json
+            except json.JSONDecodeError:
+                pass
+
+            # Attempt to fix and parse as JSON array
+            try:
+                valid_json_string = '[' + response_text.strip().replace('}\n{', '},\n{') + ']'
+                parsed_json = json.loads(valid_json_string)
+                if isinstance(parsed_json, list):
+                    return parsed_json
+            except json.JSONDecodeError:
+                pass
+
+            # Attempt to parse multiple JSON objects
+            try:
+                individual_json_objects = response_text.split('}\n{')
+                individual_json_objects = [obj.strip() for obj in individual_json_objects]
+                parsed_json = [json.loads(obj) for obj in individual_json_objects]
+                return parsed_json
+            except json.JSONDecodeError:
+                pass
+
+            # If all parsing attempts fail, return None
+            return None
 
         except json.JSONDecodeError as jde:
+            print(f"JSON Decode Error: {jde}")
             return None
         except Exception as err:
+            print(f"General Error: {err}")
             return None
 
     
@@ -268,8 +298,6 @@ class S3ImageProcessor:
         try:
             for s3_file in s3_files:
                 s3_object = self.s3_client.get_object(Bucket=self.s3_bucket_name, Key=s3_file)
-                print("############################################")
-                print("S3_file--->", s3_file)
                 image_data = s3_object['Body'].read()
                 text = self.extract_text_from_image(image_data)
                 text = text + "\n" + prompt

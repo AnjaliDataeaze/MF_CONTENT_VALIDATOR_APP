@@ -41,12 +41,12 @@ Please analyze the provided text about a mutual fund using the rules specified b
 
 Dictionary of Rules:
 - Each rule is uniquely identified by a 'rule_id'.
-- Each rule consists of a 'rule_name' and 'rule_definition'.
+- Each rule consists of a 'rule_name' and 'rule_defination' as disclaimer.
 
 Instructions:
 
 1. Rule Applicability Check:
-   - Assess if the rule applies by determining the presence of information related to its 'rule_definition'.
+   - Assess if the rule applies by determining the presence of information related to its 'rule_defination'.
    - Categorize the type of rule:
      1. Presence Verification: Rules requiring only the confirmation of information presence.
      2. Information Extraction: Rules requiring specific information to be extracted from the text.
