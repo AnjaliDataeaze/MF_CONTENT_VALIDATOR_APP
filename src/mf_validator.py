@@ -87,11 +87,6 @@ def gif_validation(file_path, program_type):
 
 # ------------------------  Transcript time ---------------------------# 
 
-# def transcript(input_video):
-#     time_difference = Final()
-#     value, time = time_difference.flow(input_video)
-#     return value, time
-
 def transcript(input_video, program_type):
     transcription = Transcrib()
     return transcription.process_audio_transcription(input_video,program_type)

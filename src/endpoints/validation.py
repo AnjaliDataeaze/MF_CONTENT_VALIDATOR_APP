@@ -56,6 +56,7 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
 #                 data = mf_validator.transcript(file_location, program_type)
 #                 os.remove(file_location)
 #                 return {"status":"Success", "Data":data}
+                
 #     except Exception as e:
 #         return {"status": "FAILED", "data": str(e)}
 

@@ -6,8 +6,8 @@ import pytesseract
 from io import BytesIO
 import json
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
-from src.config.credentials import db_config, region_name, aws_access_key_id,aws_secret_access_key, S3_BUCKET
-from src.config.queries import PROGRAM_ID, SELECT_RULES_BY_PROGRAM, SELECT_RULES_BY_PROGRAM_VIDEO
+from src.config.credentials import db_config, region_name, aws_access_key_id,aws_secret_access_key, S3_BUCKET, S3_FOLDER
+from src.config.queries import PROGRAM_ID, SELECT_RULES_BY_PROGRAM_VIDEO
 from src.config.prompts import prompt_template_video_frame
 import os
 import psycopg2
@@ -28,7 +28,7 @@ class VideoProcessor:
     def __init__(self, video_path, change_threshold=0.8, min_word_count=15):
         self.video_path = video_path
         self.s3_bucket_name = S3_BUCKET
-        self.s3_folder = "frame-analysis"
+        self.s3_folder = S3_FOLDER
         self.change_threshold = change_threshold
         self.min_word_count = min_word_count
 
@@ -105,7 +105,6 @@ class VideoProcessor:
                 cv2.imwrite(filename, frame)
                 self.upload_to_s3(filename)
                 os.remove(filename)
-                print(f"Saved frame {frame_counter} at {start:.2f} to {end:.2f} seconds as {filename}")
                 frame_counter += 1  # Increment the counter after saving each frame
             else:
                 print(f"Failed to capture frame at {start:.2f} to {end:.2f} seconds.")
@@ -170,11 +169,9 @@ class VideoProcessor:
             self.get_video_properties()
             frame_differences = self.calculate_frame_differences()
             stable_intervals = self.find_stable_intervals(frame_differences)
-            print("Done with time interval")
             self.capture_frames(stable_intervals)
             self.filter_frames()
             self.delete_similar_images()
-            print("=================== Done with Image filteration =======================")
         except Exception as e:
             print(str(e))
 
@@ -207,7 +204,6 @@ class S3ImageProcessor:
         self.max_tokens = 1000
 
     def list_s3_files(self):
-        print("S#_folder-->", self.s3_folder)
         response = self.s3_client.list_objects_v2(Bucket=self.s3_bucket_name, Prefix=self.s3_folder)
         s3_files = [obj['Key'] for obj in response.get('Contents', []) if obj['Key'].endswith(('jpg', 'jpeg', 'png'))]
         return s3_files
@@ -215,8 +211,8 @@ class S3ImageProcessor:
     def list_rules(self):
         try:    
             cursor.execute(PROGRAM_ID, (self.program_type,))
-            program_id = cursor.fetchone()[0]  # Assuming the ID is the first column in the tuple
-            cursor.execute(SELECT_RULES_BY_PROGRAM_VIDEO, (program_id, "Video",))
+            program_id = cursor.fetchone()[0] 
+            cursor.execute(SELECT_RULES_BY_PROGRAM_VIDEO, (program_id,))
             rules = cursor.fetchall()
             dictionary = {item[0]: (item[1], item[2]) for item in rules}
             return dictionary           
@@ -249,6 +245,7 @@ class S3ImageProcessor:
             user_message = {"role": "user", "content": input_text}
             messages = [user_message]
             response_text = self.generate_message(messages)
+            print("Response from bedrock--> ", response_text)
             valid_json_string = '[' + response_text.strip().replace('}\n{', '},\n{') + ']'
             parsed_json = json.loads(valid_json_string)
             return parsed_json
@@ -262,16 +259,17 @@ class S3ImageProcessor:
     def process_images(self):
         s3_files = self.list_s3_files()
         rules = self.list_rules()
-        print("Rules")
         rules_str = json.dumps(rules, indent=4)
         try:
             prompt = prompt_template_video_frame.format(rules=rules_str)
         except Exception as e:
-            print("Error-->",str(e))
+            print(str(e))
         responses = []
         try:
             for s3_file in s3_files:
                 s3_object = self.s3_client.get_object(Bucket=self.s3_bucket_name, Key=s3_file)
+                print("############################################")
+                print("S3_file--->", s3_file)
                 image_data = s3_object['Body'].read()
                 text = self.extract_text_from_image(image_data)
                 text = text + "\n" + prompt
@@ -298,7 +296,12 @@ class S3ImageProcessor:
                         }
                         responses.append(formatted_response)
                     else:
-                        print(f"Excluded: All 'Applicable' statuses are 'NO' for file {s3_file}")
+                        print(f"Excluded: All 'Validation_result' statuses are 'NO' for file {s3_file}")
+                        try:
+                            self.s3_client.delete_object(Bucket=self.s3_bucket_name, Key=s3_file)
+                            print(f"Deleted {s3_file} from S3 because all validation results were NO.")
+                        except Exception as delete_error:
+                            print(f"Failed to delete {s3_file} from S3. Error: {delete_error}")
                 else:
                     print(f"No response or empty response for file {s3_file}")
 
