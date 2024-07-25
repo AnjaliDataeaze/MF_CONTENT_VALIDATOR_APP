@@ -317,7 +317,7 @@ class S3ImageProcessor:
                     keep_response = any(item['Validation_result'] == 'YES' for item in parsed_response)
 
                     if keep_response:
-                        # Include the response with filename and results
+                        print("@@@@@@@@@@@@@@@@@@@@@@@")
                         formatted_response = {
                             "file_name": f"{self.s3_bucket_name}/{s3_file}",
                             "results": parsed_response
@@ -335,9 +335,12 @@ class S3ImageProcessor:
 
         except Exception as e:
             print(f"An exception occurred: {e}")
-
-        # Return the formatted response list
-        return responses
+        
+        if len(responses)==0:
+            return None
+        else:
+            print("Final Response--->", responses)
+            return responses
 
 
 class Get_Image_url:
