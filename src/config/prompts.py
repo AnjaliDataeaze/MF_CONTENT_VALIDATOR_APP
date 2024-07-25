@@ -75,19 +75,24 @@ Detailed Rules Description:
 """
 
 
+
 prompt_template_audio_duration = """
-Given the audio transcription in JSON format, which includes words along with their respective start and end times, calculate the total duration of a specific sentence. The sentence of interest is:
+Given an audio transcription in JSON format, where each word is associated with its respective start and end times, calculate the total duration of a specific sentence. The sentence of interest is:
 "Mutual Fund investments are subject to market risks, read all scheme related documents carefully."
 
 Procedure:
-1. Identify the start time of the first word "Mutual" and the end time of the last word "carefully".
-2. Calculate the duration by subtracting the start time of "Mutual" from the end time of "carefully".
-3. Provide the duration in seconds as the output.
+1. Parse the JSON transcription to extract the start and end times for each word.
+2. Identify the start time of the first word "Mutual" and the end time of the last word "carefully".
+3. Calculate the duration by subtracting the start time of "Mutual" from the end time of "carefully".
+4. Ensure the words are part of a contiguous sentence without interruption from other sentences or breaks.
+5. Provide the duration in seconds as the output in a JSON object format.
 
-The response should strictly be a JSON object with the duration in seconds and should not include any additional text or information.
-
-Example JSON Output Format:
+The response should strictly be a JSON object containing only the duration in seconds, formatted as following  and should not include any additional text or information as it make difficulty to parse data:
 {"Time": "<calculated_time_in_seconds>"}
 
-Use the JSON transcription provided to extract the necessary timings for the calculation.
+Example JSON transcription input for extraction:
+[{'word': 'Mutual', 'start': '145.309', 'end': '145.82'}, {'word': 'fund', 'start': '145.83', 'end': '146.05'}, ...]
+
+Ensure the sentence analysis is accurate by correctly pairing start and end times without overlapping or merging unrelated sentences.
+
 """
