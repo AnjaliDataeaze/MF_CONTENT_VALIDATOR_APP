@@ -25,7 +25,8 @@ except Exception as error:
 
 
 class VideoProcessor:
-    def __init__(self, video_path, change_threshold=0.8, min_word_count=15):
+    def __init__(self, video_path, change_threshold=0.9
+    , min_word_count=15):
         self.video_path = video_path
         self.s3_bucket_name = S3_BUCKET
         self.s3_folder = S3_FOLDER
@@ -247,7 +248,6 @@ class S3ImageProcessor:
             user_message = {"role": "user", "content": input_text}
             messages = [user_message]
             response_text = self.generate_message(messages)
-            print("Response from bedrock--> ", response_text)
 
             # Attempt to parse as JSON array directly
             try:

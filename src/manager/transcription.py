@@ -91,9 +91,9 @@ class Transcrib:
             
             response = bedrock_runtime.invoke_model(body=body, modelId=model_id)
             response_body_str = response.get('body').read()
+            
             response_body = json.loads(response_body_str)
             text_value = response_body['content'][0]['text']
-
             return text_value
 
     @staticmethod
@@ -149,11 +149,11 @@ class Transcrib:
         job_name = f"transcription_job_{current_time}"
         language_code = "en-IN"  
         plain_transcript, words_times= Transcrib().start_transcription_job(job_name, s3_url, language_code)
-        
         rule_list = Transcrib().list_rules(program_type=program_type)
         p1 = Transcrib().prompt_for_audio_rule(words_times, prompt_template_audio_duration)
         p1_response = Transcrib().generate_response(p1)
-    
+        print("TYPE_OF_RESPONSE-->", type(p1_response))
+        print("P1_RESPONSE--->", p1_response)
         data = []
         try:
             p1_data = json.loads(p1_response)
