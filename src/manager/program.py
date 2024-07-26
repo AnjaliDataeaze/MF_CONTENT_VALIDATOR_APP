@@ -21,7 +21,7 @@ class Program:
     def add_program(name, description, rules, created_by):
         try:
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            values = (name, description,created_by, now, now)
+            values = (name, description, created_by, now, now)
             cursor.execute(INSERT_PROGRAM, values)
             print("Insert program done")
 
@@ -32,7 +32,6 @@ class Program:
                 cursor.execute("SELECT id FROM rules WHERE rulename = %s", (rule_name,))
                 rule_id = cursor.fetchone()[0]
                 cursor.execute("INSERT INTO rule_to_program (program_id, rules_id) VALUES (%s, %s)", (program_id, rule_id))
-            print("Rules are mapped with ")
 
             conn.commit()
             return {"status": "SUCCESS", "data": "Program added successfully !!!"}

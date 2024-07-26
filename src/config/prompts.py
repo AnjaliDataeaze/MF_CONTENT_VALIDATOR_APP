@@ -41,18 +41,18 @@ Please analyze the provided text about a mutual fund using the rules specified b
 
 Dictionary of Rules:
 - Each rule is uniquely identified by a 'rule_id'.
-- Each rule consists of a 'rule_name' and 'rule_definition'.
+- Each rule consists of a 'rule_name' and 'rule_defination' as disclaimer.
 
 Instructions:
 
 1. Rule Applicability Check:
-   - Assess if the rule applies by determining the presence of information related to its 'rule_definition'.
+   - Assess if the rule applies by determining the presence of information related to its 'rule_defination'.
    - Categorize the type of rule:
      1. Presence Verification: Rules requiring only the confirmation of information presence.
      2. Information Extraction: Rules requiring specific information to be extracted from the text.
-   - If a rule is not applicable, set 'Applicable' to 'NO' and 'result' to 'No Info'.
-   - If a rule is applicable but does not require extraction, set 'result' to 'No Info'.
-   - If a rule is applicable and requires information extraction, provide the relevant extracted information in 'result'.
+   - If a rule is not present in context then , set 'Validation_result' to 'NO' and 'Validation_comment' to 'No Info'.
+   - If a rule is Present but does not require extraction then set 'Validation_result' to 'YES' and set 'Validation_comment' to 'No Info'.
+   - If a rule is Present and requires information extraction,then set 'Validation_result' to 'YES'and  provide the relevant extracted information in 'Validation-Comment'.
 
 2. Output Structure:
    - Generate a JSON object for each rule with the following format:
@@ -62,8 +62,9 @@ Instructions:
      {{
        "rule_id": "ID of the rule",
        "rule_name": "Name of the rule",
-       "Applicable": "YES" or "NO",
-       "result": "No Info" or "<Extracted Information>"
+       "rule_defination" : "Defination of rule"
+       "Validation_result": "YES" or "NO",
+       "Validation_comment": "No Info" or "<Extracted Information>"
      }}
    
 3. Please ensure that the response strictly adheres to the specified JSON format. Dont provide any additional information in output text.
@@ -75,53 +76,23 @@ Detailed Rules Description:
 
 
 
-
-prompt_template_audio = """Analyzed the provided audio transcription and verify the following rules and provide the information.
-
-                             The provide text is of  audio transcription of mutual fund .:
-                             There are two type of text:
-                             1) PLAIN_TRANSCRIPT: A plain text.
-                             2) JSON_TRANSCRIPT : Text which is with word and there start and end timestamp.
-                             Use JSON_TRANSCRIPT to find the legth in second  of provided sentence .
-                             Plese refer JSON_TRANSCRIPT to find out sentence length and use PLAIN_TRANSCRIPT for other rules.
-
-                          1. Output Structure:
-                            - Generate a JSON object for each rule with the following format:
-                            - Each rule data should be separated by ',' delimeter. It is very important to maintain the strcture output.
-                              {{
-                                "rule_id": "ID of the rule",
-                                "rule_name": "Name of the rule",
-                                "Applicable": "YES" or "NO",
-                                "result": "Time in seconds"
-                              },
-                              {
-                                "rule_id": "ID of the rule",
-                                "rule_name": "Name of the rule",
-                                "Applicable": "YES" or "NO",
-                                "result": "No Info" or "<Extracted Information>"
-                              }}
-                          3. Please ensure that the response strictly adheres to the specified JSON format. Dont provide any additional information in output text.
-                            there will only contains the data wich is described in output structure.
-
-                          Detailed Rules Description:
-                          {rules} 
-"""
-
-
-
 prompt_template_audio_duration = """
-Given the audio transcription in JSON format, which includes words along with their respective start and end times, calculate the total duration of a specific sentence. The sentence of interest is:
+Given an audio transcription in JSON format, where each word is associated with its respective start and end times, calculate the total duration of a specific sentence. The sentence of interest is:
 "Mutual Fund investments are subject to market risks, read all scheme related documents carefully."
 
 Procedure:
-1. Identify the start time of the first word "Mutual" and the end time of the last word "carefully".
-2. Calculate the duration by subtracting the start time of "Mutual" from the end time of "carefully".
-3. Provide the duration in seconds as the output.
+1. Parse the JSON transcription to extract the start and end times for each word.
+2. Identify the start time of the first word "Mutual" and the end time of the last word "carefully".
+3. Calculate the duration by subtracting the start time of "Mutual" from the end time of "carefully".
+4. Ensure the words are part of a contiguous sentence without interruption from other sentences or breaks.
+5. Provide the duration in seconds as the output in a JSON object format.
 
-The response should strictly be a JSON object with the duration in seconds and should not include any additional text or information.
-
-Example JSON Output Format:
+The response should strictly be a JSON object containing only the duration in seconds, formatted as following  and should not include any additional text or information as it make difficulty to parse data:
 {"Time": "<calculated_time_in_seconds>"}
 
-Use the JSON transcription provided to extract the necessary timings for the calculation.
+Example JSON transcription input for extraction:
+[{'word': 'Mutual', 'start': '145.309', 'end': '145.82'}, {'word': 'fund', 'start': '145.83', 'end': '146.05'}, ...]
+
+Ensure the sentence analysis is accurate by correctly pairing start and end times without overlapping or merging unrelated sentences.
+
 """

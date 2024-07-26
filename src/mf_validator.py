@@ -87,19 +87,14 @@ def gif_validation(file_path, program_type):
 
 # ------------------------  Transcript time ---------------------------# 
 
-# def transcript(input_video):
-#     time_difference = Final()
-#     value, time = time_difference.flow(input_video)
-#     return value, time
-
 def transcript(input_video, program_type):
     transcription = Transcrib()
-    data1, data2 = transcription.process_audio_transcription(input_video,program_type)
-    return data1, data2
+    return transcription.process_audio_transcription(input_video,program_type)
+     
 
 def frame_analysis(input_video, program_type):
-    frame = VideoProcessor(input_video)
-    frame.process_video()
+    # frame = VideoProcessor(input_video)
+    # frame.process_video()
     image  = S3ImageProcessor(program_type=program_type)
     data = image.process_images()
     return data

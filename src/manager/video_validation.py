@@ -6,8 +6,8 @@ import pytesseract
 from io import BytesIO
 import json
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
-from src.config.credentials import db_config, region_name, aws_access_key_id,aws_secret_access_key, S3_BUCKET
-from src.config.queries import PROGRAM_ID, SELECT_RULES_BY_PROGRAM, SELECT_RULES_BY_PROGRAM_VIDEO
+from src.config.credentials import db_config, region_name, aws_access_key_id,aws_secret_access_key, S3_BUCKET, S3_FOLDER
+from src.config.queries import PROGRAM_ID, SELECT_RULES_BY_PROGRAM_VIDEO
 from src.config.prompts import prompt_template_video_frame
 import os
 import psycopg2
@@ -28,7 +28,7 @@ class VideoProcessor:
     def __init__(self, video_path, change_threshold=0.8, min_word_count=15):
         self.video_path = video_path
         self.s3_bucket_name = S3_BUCKET
-        self.s3_folder = "frame-analysis"
+        self.s3_folder = S3_FOLDER
         self.change_threshold = change_threshold
         self.min_word_count = min_word_count
 
@@ -105,7 +105,6 @@ class VideoProcessor:
                 cv2.imwrite(filename, frame)
                 self.upload_to_s3(filename)
                 os.remove(filename)
-                print(f"Saved frame {frame_counter} at {start:.2f} to {end:.2f} seconds as {filename}")
                 frame_counter += 1  # Increment the counter after saving each frame
             else:
                 print(f"Failed to capture frame at {start:.2f} to {end:.2f} seconds.")
@@ -170,11 +169,9 @@ class VideoProcessor:
             self.get_video_properties()
             frame_differences = self.calculate_frame_differences()
             stable_intervals = self.find_stable_intervals(frame_differences)
-            print("Done with time interval")
             self.capture_frames(stable_intervals)
             self.filter_frames()
             self.delete_similar_images()
-            print("=================== Done with Image filteration =======================")
         except Exception as e:
             print(str(e))
 
@@ -214,14 +211,11 @@ class S3ImageProcessor:
     def list_rules(self):
         try:    
             cursor.execute(PROGRAM_ID, (self.program_type,))
-            program_id = cursor.fetchone()[0]  # Assuming the ID is the first column in the tuple
-            cursor.execute(SELECT_RULES_BY_PROGRAM_VIDEO, (program_id, "Video",))
+            program_id = cursor.fetchone()[0] 
+            cursor.execute(SELECT_RULES_BY_PROGRAM_VIDEO, (program_id,))
             rules = cursor.fetchall()
-
-            print("##########################################")
-            print("Rules-->", rules)
+            print("List of rules-->", rules)
             dictionary = {item[0]: (item[1], item[2]) for item in rules}
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!",dictionary)
             return dictionary           
         except Exception as e:
             print(str(e))
@@ -241,6 +235,7 @@ class S3ImageProcessor:
             "system": self.system_prompt,
             "messages": messages
         })
+
         response = self.bedrock_runtime.invoke_model(body=body, modelId=self.model_id)
         response_body_str = response.get('body').read()
         response_body = json.loads(response_body_str)
@@ -252,37 +247,54 @@ class S3ImageProcessor:
             user_message = {"role": "user", "content": input_text}
             messages = [user_message]
             response_text = self.generate_message(messages)
-            valid_json_string = '[' + response_text.strip().replace('}\n{', '},\n{') + ']'
-            parsed_json = json.loads(valid_json_string)
+            print("Response from bedrock--> ", response_text)
 
-            # if not response_text.strip():
-            #     print("No response received.")
-            #     return []
+            # Attempt to parse as JSON array directly
+            try:
+                parsed_json = json.loads(response_text)
+                if isinstance(parsed_json, list):
+                    return parsed_json
+            except json.JSONDecodeError:
+                pass
 
-            # # Assuming response_text contains multiple JSON objects separated by newlines
-            # json_objects = response_text.strip().split('\n')
-            # parsed_responses = [json.loads(obj) for obj in json_objects if obj.strip()]
-            return parsed_json
+            # Attempt to fix and parse as JSON array
+            try:
+                valid_json_string = '[' + response_text.strip().replace('}\n{', '},\n{') + ']'
+                parsed_json = json.loads(valid_json_string)
+                if isinstance(parsed_json, list):
+                    return parsed_json
+            except json.JSONDecodeError:
+                pass
+
+            # Attempt to parse multiple JSON objects
+            try:
+                individual_json_objects = response_text.split('}\n{')
+                individual_json_objects = [obj.strip() for obj in individual_json_objects]
+                parsed_json = [json.loads(obj) for obj in individual_json_objects]
+                return parsed_json
+            except json.JSONDecodeError:
+                pass
+
+            # If all parsing attempts fail, return None
+            return None
 
         except json.JSONDecodeError as jde:
-            print("JSON Decode Error-->", jde)
+            print(f"JSON Decode Error: {jde}")
             return None
         except Exception as err:
-            print("ERROR-->", err)
+            print(f"General Error: {err}")
             return None
 
     
     def process_images(self):
         s3_files = self.list_s3_files()
-        print("List of S3 files-->", s3_files)
         rules = self.list_rules()
         rules_str = json.dumps(rules, indent=4)
-        print("RULES--->", rules_str)
         try:
             prompt = prompt_template_video_frame.format(rules=rules_str)
         except Exception as e:
-            print("Error-->",str(e))
-        responses = {}
+            print(str(e))
+        responses = []
         try:
             for s3_file in s3_files:
                 s3_object = self.s3_client.get_object(Bucket=self.s3_bucket_name, Key=s3_file)
@@ -290,13 +302,45 @@ class S3ImageProcessor:
                 text = self.extract_text_from_image(image_data)
                 text = text + "\n" + prompt
                 response = self.generate_response(text)
-                s3_file = self.s3_bucket_name + '/' + s3_file
-                responses[s3_file] = response
-            return responses
+                
+                if response:  # Check if the response is not None or empty
+                    if isinstance(response, str):
+                        try:
+                            parsed_response = json.loads(response)  # Parse only if it's a string
+                        except json.JSONDecodeError as e:
+                            print(f"Error parsing JSON from response: {e}")
+                            continue  # Skip this iteration if JSON is malformed
+                    else:
+                        parsed_response = response  # Directly use the list
+
+                    print("Parsed the data successfully.")
+                    keep_response = any(item['Validation_result'] == 'YES' for item in parsed_response)
+
+                    if keep_response:
+                        print("@@@@@@@@@@@@@@@@@@@@@@@")
+                        formatted_response = {
+                            "file_name": f"{self.s3_bucket_name}/{s3_file}",
+                            "results": parsed_response
+                        }
+                        responses.append(formatted_response)
+                    else:
+                        print(f"Excluded: All 'Validation_result' statuses are 'NO' for file {s3_file}")
+                        try:
+                            self.s3_client.delete_object(Bucket=self.s3_bucket_name, Key=s3_file)
+                            print(f"Deleted {s3_file} from S3 because all validation results were NO.")
+                        except Exception as delete_error:
+                            print(f"Failed to delete {s3_file} from S3. Error: {delete_error}")
+                else:
+                    print(f"No response or empty response for file {s3_file}")
+
         except Exception as e:
-            print(str(e))
-
-
+            print(f"An exception occurred: {e}")
+        
+        if len(responses)==0:
+            return None
+        else:
+            print("Final Response--->", responses)
+            return responses
 
 
 class Get_Image_url:
