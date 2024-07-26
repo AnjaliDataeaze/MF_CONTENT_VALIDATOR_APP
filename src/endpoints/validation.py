@@ -46,14 +46,24 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
             response = mf_validator.frame_analysis(file_location,program_type)
             data = mf_validator.transcript(file_location, program_type)
             os.remove(file_location)
+            # if response is None and data is None:
+            #     return {"frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
+            # elif data is None and response is not None:
+            #     return {"frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "SUCCESS", "data": data}}
+            # elif response is None and data is not None:
+            #     return {"frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
+            # else:
+            #     return {"frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "SUCCESS", "data": data}}
+            
+                
             if response is None and data is None:
-                return {"frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
-            elif data is None and response is not None:
-                return {"frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "SUCCESS", "data": data}}
-            elif response is None and data is not None:
-                return {"frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
+                return {"status": "FAILED", "Data": "System error"}
+            elif response is None:
+                return {"status": "PARTIAL SUCCESS", "Data": [{"frame": "Failed for frame analysis"}, {"audio": data}]}
+            elif data is None:
+                return {"status": "PARTIAL SUCCESS", "Data": [{"frame": response}, {"audio": "Failed for audio analysis"}]}
             else:
-                return {"frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "SUCCESS", "data": data}}
+                return {"status": "SUCCESS", "Data": [{"frame": response}, {"audio": data}]}
 
         else:
             if operation[0] == 'frame_analysis':
@@ -97,14 +107,23 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
             response = mf_validator.frame_analysis(file_location,program_type)
             data = mf_validator.transcript(file_location, program_type)
             os.remove(file_location)
+
             if response is None and data is None:
-                return {"frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
+                return {"status": "FAILED", "frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
             elif data is None and response is not None:
-                return {"frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "SUCCESS", "data": data}}
+                return {"status": "SUCCESS", "frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "SUCCESS", "data": data}}
             elif response is None and data is not None:
-                return {"frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
+                return {"status": "SUCCESS", "frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
             else:
-                return {"frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "SUCCESS", "data": data}}
+                return {"status": "SUCCESS", "frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "SUCCESS", "data": data}}
+            # if response is None and data is None:
+            #     return {"status": "FAILED", "Data": "System error"}
+            # elif response is None:
+            #     return {"status": "SUCCESS", "Data": [{"frame": "Failed for frame analysis"}, {"audio": data}]}
+            # elif data is None:
+            #     return {"status": "SUCCESS", "Data": [{"frame": response}, {"audio": "Failed for audio analysis"}]}
+            # else:
+            #     return {"status": "SUCCESS", "Data": [{"frame": response}, {"audio": data}]}
 
         else:
             if operations[0] == 'frame_analysis':
