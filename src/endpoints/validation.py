@@ -162,14 +162,15 @@ async def validation(file: UploadFile = File(...), dataset_name: str = Form(...)
     try:
         file_location = f"temp_files/{file.filename}"
         os.makedirs(os.path.dirname(file_location), exist_ok=True)
+
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        
-        response = mf_validator.source_of_truth(file, dataset_name, description, lookup_column )
+
+        response, value = mf_validator.source_of_truth(file_location, dataset_name, description, lookup_column )
         if response ==1:
             return {"status": "SUCCESS" , "data": "File Uploaded successufully"}
         else:
-            return {"status": "FAILED" , "data": "Failed to upload file"}
+            return {"status": "FAILED" , "data": value}
     except Exception as e:
         return {"status": "FAILED" , "data": str(e)}
 
