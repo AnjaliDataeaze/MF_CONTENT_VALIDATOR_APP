@@ -61,8 +61,10 @@ class Source_of_Truth:
         try:
             cursor.execute(LIST_DATASET)
             dataset = cursor.fetchall()
-            dataset = dataset[0]
-            return {"status":"SUCCESS","Data": dataset}
+            dataset_list = [item[0] for item in dataset]
+            conn.commit()
+            
+            return {"status":"SUCCESS","Data": dataset_list}
         except Exception as e:
             data = f"Error: {str(e)}"
             return {"status":"FAILED","Data": data}
@@ -72,8 +74,9 @@ class Source_of_Truth:
         try:
             cursor.execute(LIST_SCHEME, (dataset_name,))
             scheme = cursor.fetchall()
-            scheme=scheme[0]
-            return {"status":"SUCCESS","Data": scheme}
+            scheme_list = [item[0] for item in scheme]
+            conn.commit()
+            return {"status":"SUCCESS","Data": scheme_list}
         except Exception as e:
             data = f"Error: {str(e)}"
             return {"status":"FAILED","Data": data}
