@@ -167,3 +167,23 @@ SELECT_RULES_BY_PROGRAM_AUDIO = """
     FROM rules r
     JOIN rule_to_program rp ON r.id = rp.rules_id
     WHERE rp.program_id = %s AND r.media_type = 'audio' """
+
+#------------ Queries For Source Metadata-----------------------------#
+
+INSERT_MASTER_QUERY = """
+                INSERT INTO Ref_dset_master (dset_name, description, lookup_key_colname, all_col_names)
+                VALUES (%s, %s, %s, %s) RETURNING Id;
+                """
+
+INSERT_RECORD_QUERY = """
+                INSERT INTO Ref_dset_records (type_id, col_name, col_value, lk_colname, lk_colvalue)
+                VALUES %s;
+                """
+LIST_DATASET = """SELECT dset_name from  Ref_dset_master;"""
+
+LIST_SCHEME = """
+                SELECT DISTINCT r.lk_colvalue
+                FROM ref_dset_master m
+                JOIN ref_dset_records r ON m.id = r.type_id
+                WHERE m.dset_name = %s;
+"""
