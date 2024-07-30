@@ -53,9 +53,7 @@ class Source_of_Truth:
                 if conn:
                     conn.rollback()
                 return 2, str(e)
-            finally:
-                if conn:
-                    conn.close()
+            
                   
     def list_dataset(self):
         try:
