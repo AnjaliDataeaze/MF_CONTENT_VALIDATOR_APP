@@ -14,17 +14,23 @@ class S3Key(BaseModel):
 
 
 @router.post("/validation")
-async def validation(file: UploadFile = File(...), program_type: str = Form(...), media_type: str = Form(...)):
+async def validation(file: UploadFile = File(...), program_type: str = Form(...), media_type: str = Form(...), dataset_name: str = Form(...), scheme_name: str = Form(...)):
     try:
         file_location = f"temp_files/{file.filename}"
         os.makedirs(os.path.dirname(file_location), exist_ok=True)
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
+        # if media_type =="pdf":
+        #     value, response = mf_validator.validation(file_location, program_type)
+        #     os.remove(file_location)
+        #     return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
+
         if media_type =="pdf":
-            value, response = mf_validator.validation(file_location, program_type)
+            value, response = mf_validator.validation(file_location, program_type, dataset_name, scheme_name)
             os.remove(file_location)
             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
+        
         elif media_type =="GIF":
             value, response = mf_validator.gif_validation(file_location, program_type)
             os.remove(file_location)
@@ -46,14 +52,24 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
             response = mf_validator.frame_analysis(file_location,program_type)
             data = mf_validator.transcript(file_location, program_type)
             os.remove(file_location)
+            # if response is None and data is None:
+            #     return {"frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
+            # elif data is None and response is not None:
+            #     return {"frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "SUCCESS", "data": data}}
+            # elif response is None and data is not None:
+            #     return {"frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
+            # else:
+            #     return {"frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "SUCCESS", "data": data}}
+            
+                
             if response is None and data is None:
-                return {"frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
-            elif data is None and response is not None:
-                return {"frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "SUCCESS", "data": data}}
-            elif response is None and data is not None:
-                return {"frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
+                return {"status": "FAILED", "Data": "System error"}
+            elif response is None:
+                return {"status": "PARTIAL SUCCESS", "Data": [{"frame": "Failed for frame analysis"}, {"audio": data}]}
+            elif data is None:
+                return {"status": "PARTIAL SUCCESS", "Data": [{"frame": response}, {"audio": "Failed for audio analysis"}]}
             else:
-                return {"frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "SUCCESS", "data": data}}
+                return {"status": "SUCCESS", "Data": [{"frame": response}, {"audio": data}]}
 
         else:
             if operation[0] == 'frame_analysis':
@@ -86,8 +102,6 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
 async def validation(file: UploadFile = File(...), program_type: str = Form(...), operation:str = Form(...)):
     try:
         operations = json.loads(operation)
-        print("operations-->", operations)
-        print(type(operations))
         file_location = f"temp_files/{file.filename}"
         os.makedirs(os.path.dirname(file_location), exist_ok=True)
         with open(file_location, "wb") as buffer:
@@ -97,14 +111,23 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
             response = mf_validator.frame_analysis(file_location,program_type)
             data = mf_validator.transcript(file_location, program_type)
             os.remove(file_location)
+
             if response is None and data is None:
-                return {"frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
+                return {"status": "FAILED", "frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
             elif data is None and response is not None:
-                return {"frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "SUCCESS", "data": data}}
+                return {"status": "SUCCESS", "frame": {"status": "FAILED", "data": "Failed for frame analysis"}, "audio": {"status": "SUCCESS", "data": data}}
             elif response is None and data is not None:
-                return {"frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
+                return {"status": "SUCCESS", "frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "FAILED", "data": "Failed for audio analysis"}}
             else:
-                return {"frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "SUCCESS", "data": data}}
+                return {"status": "SUCCESS", "frame": {"status": "SUCCESS", "data": response}, "audio": {"status": "SUCCESS", "data": data}}
+            # if response is None and data is None:
+            #     return {"status": "FAILED", "Data": "System error"}
+            # elif response is None:
+            #     return {"status": "SUCCESS", "Data": [{"frame": "Failed for frame analysis"}, {"audio": data}]}
+            # elif data is None:
+            #     return {"status": "SUCCESS", "Data": [{"frame": response}, {"audio": "Failed for audio analysis"}]}
+            # else:
+            #     return {"status": "SUCCESS", "Data": [{"frame": response}, {"audio": data}]}
 
         else:
             if operations[0] == 'frame_analysis':
@@ -113,8 +136,6 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
                 if response is None:
                     return {"status": "FAILED" , "Data": "SYSTEM FAILED"}
                 else:
-                    print("++++++++=============================")
-                    print(response)
                     return {"status": "SUCCESS" , "Data": response}
 
             elif operations[0] == 'audio_analysis':
@@ -135,5 +156,23 @@ async def gets3image(s3key:S3Key):
     response = mf_validator.get_image_url(s3key.key)
     return {"status": "SUCCESS" , "data": response}
         
+        
+@router.post("/source-of-truth")
+async def validation(file: UploadFile = File(...), dataset_name: str = Form(...), description: str = Form(...),  lookup_column: str = Form(...)):
+    try:
+        file_location = f"temp_files/{file.filename}"
+        os.makedirs(os.path.dirname(file_location), exist_ok=True)
+
+        with open(file_location, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        response, value = mf_validator.source_of_truth(file_location, dataset_name, description, lookup_column )
+        if response ==1:
+            return {"status": "SUCCESS" , "data": "File Uploaded successufully"}
+        else:
+            return {"status": "FAILED" , "data": value}
+    except Exception as e:
+        return {"status": "FAILED" , "data": str(e)}
+
         
     
