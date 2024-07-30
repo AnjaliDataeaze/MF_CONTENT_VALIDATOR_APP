@@ -12,6 +12,8 @@ router = APIRouter()
 class S3Key(BaseModel):
     key: str
 
+class List_scheme(BaseModel):
+    dataset: str
 
 @router.post("/validation")
 async def validation(file: UploadFile = File(...), program_type: str = Form(...), media_type: str = Form(...), dataset_name: str = Form(...), scheme_name: str = Form(...)):
@@ -162,7 +164,6 @@ async def validation(file: UploadFile = File(...), dataset_name: str = Form(...)
     try:
         file_location = f"temp_files/{file.filename}"
         os.makedirs(os.path.dirname(file_location), exist_ok=True)
-
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
@@ -176,3 +177,10 @@ async def validation(file: UploadFile = File(...), dataset_name: str = Form(...)
 
         
     
+@router.get("/source_of_truth/list_dataset")
+def list_dataset():
+    return mf_validator.list_dataset() 
+
+@router.post("/source_of_truth/list_scheme")
+def list_scheme(listscheme:List_scheme):
+    return mf_validator.list_scheme(listscheme.dataset) 
