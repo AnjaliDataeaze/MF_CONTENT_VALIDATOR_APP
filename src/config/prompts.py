@@ -96,3 +96,44 @@ Example JSON transcription input for extraction:
 Ensure the sentence analysis is accurate by correctly pairing start and end times without overlapping or merging unrelated sentences.
 
 """
+
+source_of_truth = """
+You are given two sets of data: an AI-generated output in a list format and an original result in JSON format. 
+The structure of the rule provided by AI is [rule_name, rule_definition, result, validation comment]. 
+Your task is to analyze the AI-generated output and compare it with the source of truth data based on the following instructions: 
+1. Match Rules: For each rule in the AI-generated output, check if there is related data present in the source of truth. 
+                If there is a match, check the rule's result and validation comment with the matched source of truth data. 
+2. Output Format: If the rule matches and the result and validation comment match the source of truth data, 
+                  return the response: 
+                  {"rule_name": "AI generated rulename", 
+                   "rule_defination": "AI generated", 
+                   "result": "AI generated result", 
+                   "validation_comment": "AI generated validation comment", 
+                   "source_of_truth_result": "TRUE", 
+                   "source_of_truth_comment": "Verified: The data matches the source of truth."}. 
+                   
+                   If the rule matches but the result is wrong or different, return the response: 
+                   {"rule_name": "AI generated rulename", 
+                    "rule_defination": "AI generated", 
+                    "result": "AI generated result", 
+                    "validation_comment": "AI generated validation comment", 
+                    "source_of_truth_result": "FALSE", 
+                    "source_of_truth_comment": "Mismatch: The data does not match the source of truth. Expected: [expected data]."} 
+                    
+                  If there is no match in the rule, return the response: 
+                  {"rule_name": "AI generated rulename", 
+                   "rule_defination": "AI generated", 
+                   "result": "AI generated result", 
+                   "validation_comment": "AI generated validation comment", 
+                   "source_of_truth_result": "Not Applicable", 
+                   "source_of_truth_comment": "No Comment"}. 
+                   
+3. Detailed Steps: Iterate over each rule in the AI-generated list. 
+   For each rule, identify the related field in the source of truth. 
+   Compare the data: If a match is found, set "source_of_truth_result" to "TRUE" if the data matches or "FALSE" if it does not. 
+   If no match is found, set "source_of_truth_result" to "Not Applicable". Generate the output according to the provided format. 
+   Instructions: 1. Follow the steps and rules provided to analyze the data. 
+                 2. Ensure the output adheres to the specified format. 
+                 3. Validate the results and include specific comments explaining why the data matches or does not match. 
+                 4. Return only the JSON response without any additional explanation or details."
+"""
