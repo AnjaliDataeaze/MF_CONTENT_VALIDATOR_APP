@@ -159,7 +159,7 @@ async def gets3image(s3key:S3Key):
     return {"status": "SUCCESS" , "data": response}
         
         
-@router.post("/source-of-truth")
+@router.post("/source_of_truth")
 async def validation(file: UploadFile = File(...), dataset_name: str = Form(...), description: str = Form(...),  lookup_column: str = Form(...)):
     try:
         file_location = f"temp_files/{file.filename}"
