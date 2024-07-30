@@ -4,7 +4,7 @@ from src.manager.rules import Rules
 from src.manager.disclaimer import Disclaimer
 # from src.manager.validation import AnalyzeDocument
 # from src.config.prompts import PROMPT
-# from src.manager.transcription import Final
+from src.manager.source_of_truth import Source_of_Truth
 from src.manager.validation import ExtractText
 from src.manager.transcription import Transcrib
 
@@ -73,17 +73,23 @@ def delete_disclaimer(disclaimer_id):
 # --------------------------- Validation ---------------------------------------- #
 
 
-def validation(file_path, program_type):
+def validation(file_path, program_type, dataset_name, scheme_name ):
     extract1 = ExtractText()
     value, results = extract1.process_image_and_generate_response(file_path=file_path, program_type=program_type)
+
     if value == 1:
-        return 1, results
+        value1, result1 = extract1.compare_with_SOT(data= results, dataset_name=dataset_name, lk_value = scheme_name )
+        return value1, result1 
+    
+    else:
+        return value, results
 
 def gif_validation(file_path, program_type):
     extract1 = ExtractText()
     value, results = extract1.process_gif(file_path=file_path, program_type=program_type)
     if value == 1:
         return 1, results
+
 
 # ------------------------  Transcript time ---------------------------# 
 
@@ -93,8 +99,15 @@ def transcript(input_video, program_type):
      
 
 def frame_analysis(input_video, program_type):
-    # frame = VideoProcessor(input_video)
-    # frame.process_video()
+    frame = VideoProcessor(input_video)
+    frame.process_video()
     image  = S3ImageProcessor(program_type=program_type)
     data = image.process_images()
     return data
+
+#--------------------source of truth -----------------# 
+
+def source_of_truth(csv_file_path, dataset_name, description, lookup_key_colname):
+    sot = Source_of_Truth()
+    return  sot.upload_csv_to_db(csv_file_path, dataset_name, description, lookup_key_colname)
+    
