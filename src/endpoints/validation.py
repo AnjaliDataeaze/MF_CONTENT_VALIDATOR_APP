@@ -14,17 +14,23 @@ class S3Key(BaseModel):
 
 
 @router.post("/validation")
-async def validation(file: UploadFile = File(...), program_type: str = Form(...), media_type: str = Form(...)):
+async def validation(file: UploadFile = File(...), program_type: str = Form(...), media_type: str = Form(...), dataset_name: str = Form(...), scheme_name: str = Form(...)):
     try:
         file_location = f"temp_files/{file.filename}"
         os.makedirs(os.path.dirname(file_location), exist_ok=True)
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
+        # if media_type =="pdf":
+        #     value, response = mf_validator.validation(file_location, program_type)
+        #     os.remove(file_location)
+        #     return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
+
         if media_type =="pdf":
-            value, response = mf_validator.validation(file_location, program_type)
+            value, response = mf_validator.validation(file_location, program_type, dataset_name, scheme_name)
             os.remove(file_location)
             return {"status": "SUCCESS" if value == 1 else "FAILED", "data": response}
+        
         elif media_type =="GIF":
             value, response = mf_validator.gif_validation(file_location, program_type)
             os.remove(file_location)
@@ -96,8 +102,6 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
 async def validation(file: UploadFile = File(...), program_type: str = Form(...), operation:str = Form(...)):
     try:
         operations = json.loads(operation)
-        print("operations-->", operations)
-        print(type(operations))
         file_location = f"temp_files/{file.filename}"
         os.makedirs(os.path.dirname(file_location), exist_ok=True)
         with open(file_location, "wb") as buffer:
@@ -132,8 +136,6 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
                 if response is None:
                     return {"status": "FAILED" , "Data": "SYSTEM FAILED"}
                 else:
-                    print("++++++++=============================")
-                    print(response)
                     return {"status": "SUCCESS" , "Data": response}
 
             elif operations[0] == 'audio_analysis':
@@ -154,5 +156,22 @@ async def gets3image(s3key:S3Key):
     response = mf_validator.get_image_url(s3key.key)
     return {"status": "SUCCESS" , "data": response}
         
+        
+@router.post("/source-of-truth")
+async def validation(file: UploadFile = File(...), dataset_name: str = Form(...), description: str = Form(...),  lookup_column: str = Form(...)):
+    try:
+        file_location = f"temp_files/{file.filename}"
+        os.makedirs(os.path.dirname(file_location), exist_ok=True)
+        with open(file_location, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        response = mf_validator.source_of_truth(file, dataset_name, description, lookup_column )
+        if response ==1:
+            return {"status": "SUCCESS" , "data": "File Uploaded successufully"}
+        else:
+            return {"status": "FAILED" , "data": "Failed to upload file"}
+    except Exception as e:
+        return {"status": "FAILED" , "data": str(e)}
+
         
     
