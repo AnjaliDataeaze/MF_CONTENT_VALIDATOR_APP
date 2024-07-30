@@ -107,7 +107,7 @@ Your task is to analyze the AI-generated output and compare it with the source o
                   return the response: 
                   {"rule_name": "AI generated rulename", 
                    "rule_defination": "AI generated", 
-                   "result": "AI generated result", 
+                   "validation_result": "AI generated result", 
                    "validation_comment": "AI generated validation comment", 
                    "source_of_truth_result": "TRUE", 
                    "source_of_truth_comment": "Verified: The data matches the source of truth."}. 
@@ -115,7 +115,7 @@ Your task is to analyze the AI-generated output and compare it with the source o
                    If the rule matches but the result is wrong or different, return the response: 
                    {"rule_name": "AI generated rulename", 
                     "rule_defination": "AI generated", 
-                    "result": "AI generated result", 
+                    "validation_result": "AI generated result", 
                     "validation_comment": "AI generated validation comment", 
                     "source_of_truth_result": "FALSE", 
                     "source_of_truth_comment": "Mismatch: The data does not match the source of truth. Expected: [expected data]."} 
@@ -123,7 +123,7 @@ Your task is to analyze the AI-generated output and compare it with the source o
                   If there is no match in the rule, return the response: 
                   {"rule_name": "AI generated rulename", 
                    "rule_defination": "AI generated", 
-                   "result": "AI generated result", 
+                   "validation_result": "AI generated result", 
                    "validation_comment": "AI generated validation comment", 
                    "source_of_truth_result": "Not Applicable", 
                    "source_of_truth_comment": "No Comment"}. 
