@@ -61,6 +61,7 @@ class Source_of_Truth:
         try:
             cursor.execute(LIST_DATASET)
             dataset = cursor.fetchall()
+            dataset = dataset[0]
             return {"status":"SUCCESS","Data": dataset}
         except Exception as e:
             data = f"Error: {str(e)}"
@@ -71,6 +72,7 @@ class Source_of_Truth:
         try:
             cursor.execute(LIST_SCHEME, (dataset_name,))
             scheme = cursor.fetchall()
+            scheme=scheme[0]
             return {"status":"SUCCESS","Data": scheme}
         except Exception as e:
             data = f"Error: {str(e)}"
