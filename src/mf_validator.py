@@ -111,3 +111,10 @@ def source_of_truth(csv_file_path, dataset_name, description, lookup_key_colname
     sot = Source_of_Truth()
     return  sot.upload_csv_to_db(csv_file_path, dataset_name, description, lookup_key_colname)
     
+def list_dataset():
+    sot = Source_of_Truth()
+    return sot.list_dataset()
+
+def list_scheme(dataset_name):
+    sot = Source_of_Truth()
+    return sot.list_scheme(dataset_name)
