@@ -17,7 +17,7 @@ import cv2
 from botocore.exceptions import NoCredentialsError
 from src.config.credentials import aws_access_key_id, aws_secret_access_key, db_config, region_name
 from src.config.queries import GET_PROGRAM_ID, GET_Rule_ID_ASSOCIATED_WITH_PROGRAM, GET_DECRIPTION_FOR_RULE_ID, RETURN_OUTPUT, CREATE_SEQUENCE_GROUP_ID,NEXTVAL_GROUP_ID, INSERT_OUTPUT
-from src.config.prompts import prompt_from_config
+from src.config.prompts import prompt_from_config, source_of_truth
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -215,7 +215,6 @@ class ExtractText:
                     )
                     rows = cursor.fetchall()
 
-                    # Format the data as required for frontend
                     data = []
                     for row in rows:
                         data.append([row[0], row[1], row[2], row[3]])
@@ -233,7 +232,6 @@ class ExtractText:
             # Upload local file to S3 and get the S3 URL
             text_processor = ExtractText()
             s3_url = text_processor.upload_to_aws(file_path, bucket, s3_file)
-            print(s3_url)
             if s3_url is None:
                 return
 
@@ -241,7 +239,6 @@ class ExtractText:
                 extracted_text = text_processor.extract_text_from_pdf(file_path)
             else:
                 extracted_text = text_processor.extract_text_from_image(file_path)
-            print(extracted_text)
             # Fetch rules and descriptions
             rules_descriptions = text_processor.fetch_rules_and_descriptions(program_type)
             if isinstance(rules_descriptions, str):
@@ -262,9 +259,6 @@ class ExtractText:
                 except (ValueError, SyntaxError) as e:
                     print(f"Failed to parse results: {e}")
 
-
-
-            # Check if lengths of rules_descriptions and results match
             if not isinstance(results, list) or len(rules_descriptions) != len(results):
 
                 raise ValueError("Mismatch between number of rules and results")
@@ -311,6 +305,30 @@ class ExtractText:
             logging.exception("An error occurred during the processing")
             return 2, f"An error occurred: {e}"
         
+
+    def compare_with_SOT(self, data, dataset_name, lk_value):
+        try:
+            cursor.execute("""
+                            SELECT m.col_name, m.col_value
+                            FROM ref_dset_records m
+                            INNER JOIN ref_dset_master r ON r.id = m.type_id
+                            WHERE m.lk_colvalue = %s AND r.dset_name = %s """, (lk_value, dataset_name,))
+            row = cursor.fetchall()
+
+            result_dict = {item[0]: item[1] for item in row}
+            result_json = json.dumps(result_dict, indent=4)
+
+            
+            prompt =   f"AI Generated Data >>> {data}  + '\n' + Original Data >> {result_json} + '\n' + Instruction >>>{source_of_truth}"
+            response = ExtractText.generate_response(prompt)
+            response_json = json.loads(response)
+            
+            return 1, response_json
+        except Exception as e:
+            return 2, str(e)
+
+
+    
 #==========================================================================================================
 #==========================================================================================================
 #==========================================================================================================
@@ -371,11 +389,7 @@ class ExtractText:
             start_time = start_frame / fps
             stable_intervals.append((start_time, end_time))
 
-        # Print stable intervalsget_time_frame(gif_path):
-        # for interval in stable_intervals:
-        #     print(f"({interval[0]:.2f} , {interval[1]:.2f}),")
-
-        # Extract and upload frames at the end of each interval
+        
         for i, (start_time, end_time) in enumerate(stable_intervals):
             end_frame = int(end_time * fps)
             
@@ -490,3 +504,5 @@ class ExtractText:
             except Exception as e:
                 logging.exception("Error in adding output to the database")
                 return f"Error adding output to the database: {e}"
+            
+
