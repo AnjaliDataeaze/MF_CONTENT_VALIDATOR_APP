@@ -103,7 +103,7 @@ class VideoProcessor:
             if ret:
 
                 # filename = f'frame_{frame_counter}.png' 
-                filename = f'frame_at_{start}_to_{end}_seconds.png' # Use the counter for the filename
+                filename = f'frame_at_{end}_seconds.png' # Use the counter for the filename
                 cv2.imwrite(filename, frame)
                 self.upload_to_s3(filename)
                 os.remove(filename)

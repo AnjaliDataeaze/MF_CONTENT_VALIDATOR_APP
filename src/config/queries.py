@@ -181,6 +181,18 @@ INSERT_RECORD_QUERY = """
                 """
 LIST_DATASET = """SELECT dset_name from  Ref_dset_master;"""
 
+
+LIST_DATASET_INFO = """ SELECT
+                        m.dset_name,
+                        m.description,
+                        m.all_col_names,
+                        r.lk_colvalue
+                        FROM
+                        ref_dset_master m
+                        JOIN
+                        ref_dset_records r ON m.id = r.type_id;
+"""
+
 LIST_SCHEME = """
                 SELECT DISTINCT r.lk_colvalue
                 FROM ref_dset_master m

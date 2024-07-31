@@ -77,23 +77,27 @@ Detailed Rules Description:
 
 
 prompt_template_audio_duration = """
-Given an audio transcription in JSON format, where each word is associated with its respective start and end times, calculate the total duration of a specific sentence. The sentence of interest is:
-"Mutual Fund investments are subject to market risks, read all scheme related documents carefully."
+Given an audio transcription provided as a list of tuples, where each tuple contains a word along with its respective start and end times, perform the following steps to calculate the total duration of the sentence: "Mutual Fund investments are subject to market risks, read all scheme related documents carefully." Follow these instructions exactly:
 
 Procedure:
-1. Parse the JSON transcription to extract the start and end times for each word.
-2. Identify the start time of the first word "Mutual" and the end time of the last word "carefully".
-3. Calculate the duration by subtracting the start time of "Mutual" from the end time of "carefully".
-4. Ensure the words are part of a contiguous sentence without interruption from other sentences or breaks.
-5. Provide the duration in seconds as the output in a JSON object format.
+1. Parse the list of tuples to check if the full sentence "Mutual Fund investments are subject to market risks, read all scheme related documents carefully" is present and in the correct sequence.
+2. If the sentence is fully present, identify the start time for "Mutual" and the end time for "carefully".
+3. Calculate the sentence's duration by subtracting the start time of "Mutual" from the end time of "carefully".
+4. Return the calculated duration in seconds using this JSON format only: {"Time": "<calculated_time_in_seconds>"}
+5. If any part of the sentence is missing or out of order, return the error in this JSON format only: {"Error": "The specified sentence is not present in the audio transcription."}
 
-The response should strictly be a JSON object containing only the duration in seconds, formatted as following  and should not include any additional text or information as it make difficulty to parse data:
-{"Time": "<calculated_time_in_seconds>"}
+Error Handling:
+- Strictly follow the above procedure without adding any explanatory text, commentary, or additional data in the output.
 
-Example JSON transcription input for extraction:
-[{'word': 'Mutual', 'start': '145.309', 'end': '145.82'}, {'word': 'fund', 'start': '145.83', 'end': '146.05'}, ...]
+Example format for input data:
+[('Mutual', 'aa.a', 'bb.b'), ('Fund', 'cc.c', 'dd.d'), ('investments', 'ee.e', 'ff.f'), ..., ('carefully', 'gg.g', 'hh.h')]
 
-Ensure the sentence analysis is accurate by correctly pairing start and end times without overlapping or merging unrelated sentences.
+Calculate the duration:
+- Start time of "Mutual": aa.a
+- End time of "carefully": hh.h
+- Duration = end time of 'carefully' (hh.h) - start time of 'Mutual' (aa.a).
+
+Ensure that the response contains only the necessary JSON object, reflecting either the time calculation or an error message based on the transcription analysis.
 
 """
 
