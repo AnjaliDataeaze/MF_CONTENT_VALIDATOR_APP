@@ -132,13 +132,13 @@ NEXTVAL_GROUP_ID = "SELECT nextval('group_id_seq')"
 
 
 
-INSERT_RESULTS = """ INSERT INTO results (group_id, document_link, video_link, media_type, time_stamp)
-                    VALUES (%s, %s, %s, %s, %s)
+INSERT_RESULTS = """ INSERT INTO results (video_link, media_type, time_stamp)
+                    VALUES (%s, %s, %s) RETURNING parent_id
                     """
-INSERT_OUTPUT_RESULTS = """INSERT INTO output_results (parent_id, group_id, rule_id, rule, rulename, answer, output, time_stamp)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+INSERT_OUTPUT_RESULTS = """INSERT INTO output_results (parent_id, group_id, document_link, rule_id, rule, rulename, answer, output, time_stamp)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
                     """
-
+INSERT_OUTPUT = ""
 ## Queries for User Managememnt
 
 
@@ -192,7 +192,6 @@ LIST_DATASET_INFO = """ SELECT
                         m.dset_name,
                         m.description,
                         m.all_col_names,
-                        r.lk_colvalue
                         FROM
                         ref_dset_master m
                         JOIN

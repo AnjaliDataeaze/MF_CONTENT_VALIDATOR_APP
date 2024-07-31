@@ -7,12 +7,13 @@ from io import BytesIO
 import json
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 from src.config.credentials import db_config, region_name, aws_access_key_id,aws_secret_access_key, S3_BUCKET, S3_FOLDER
-from src.config.queries import PROGRAM_ID, SELECT_RULES_BY_PROGRAM_VIDEO
+from src.config.queries import PROGRAM_ID, SELECT_RULES_BY_PROGRAM_VIDEO, INSERT_RESULTS, INSERT_OUTPUT_RESULTS
 from src.config.prompts import prompt_template_video_frame
 import os
 import psycopg2
 import imagehash
 import logging
+import datetime
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -42,6 +43,24 @@ class VideoProcessor:
         self.frame_count = None
         self.duration = None
     
+
+    def upload_to_aws(self):
+        s3_file = os.path.basename(self.video_path)
+        s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
+                        aws_secret_access_key=aws_secret_access_key)
+
+        try:
+            s3.upload_file(self.video_path, S3_BUCKET, s3_file)
+            print("Upload Successful")
+            return f"s3://{S3_BUCKET}/{s3_file}"
+        except FileNotFoundError:
+            print("The file was not found")
+            return None
+        except NoCredentialsError:
+            print("Credentials not available")
+            return None
+        
+        
     def get_video_properties(self):
         cap = cv2.VideoCapture(self.video_path)
         if not cap.isOpened():
@@ -112,10 +131,7 @@ class VideoProcessor:
 
         cap.release()
 
-    def upload_to_s3(self, filename):
-        with open(filename, "rb") as f:
-            self.s3_client.upload_fileobj(f, self.s3_bucket_name, f"{self.s3_folder}/{filename}")
-
+     
     def filter_frames(self):
         response = self.s3_client.list_objects_v2(Bucket=self.s3_bucket_name, Prefix=self.s3_folder)
         s3_files = [obj['Key'] for obj in response.get('Contents', []) if obj['Key'].endswith(('jpg', 'jpeg', 'png'))]
@@ -157,7 +173,7 @@ class VideoProcessor:
                     self.s3_client.delete_object(Bucket=self.s3_bucket_name, Key=del_key)
                     deleted_images.append(del_key)
                     logging.info(f'Deleted: {del_key}')
-                    del hashes[h]  # Ensure to handle this correctly if deletion is not successful
+                    del hashes[h]  
                 except Exception as e:
                     logging.error(f'Error deleting file {del_key}: {e}')
 
@@ -167,19 +183,23 @@ class VideoProcessor:
   
     def process_video(self):
         try:
+            video_link = self.upload_to_aws()
             self.get_video_properties()
             frame_differences = self.calculate_frame_differences()
             stable_intervals = self.find_stable_intervals(frame_differences)
             self.capture_frames(stable_intervals)
             self.filter_frames()
             self.delete_similar_images()
+            return video_link
         except Exception as e:
             print(str(e))
+            return None
 
 
 class S3ImageProcessor:
-    def __init__(self,program_type):
+    def __init__(self,program_type, video_link):
         self.program_type = program_type
+        self.video_link = video_link
         self.s3_bucket_name = S3_BUCKET
         self.s3_folder = "frame-analysis"
         self.s3_client = boto3.client(
@@ -215,7 +235,6 @@ class S3ImageProcessor:
             program_id = cursor.fetchone()[0] 
             cursor.execute(SELECT_RULES_BY_PROGRAM_VIDEO, (program_id,))
             rules = cursor.fetchall()
-            print("List of rules-->", rules)
             dictionary = {item[0]: (item[1], item[2]) for item in rules}
             return dictionary           
         except Exception as e:
@@ -258,7 +277,6 @@ class S3ImageProcessor:
             except json.JSONDecodeError:
                 pass
 
-            # Attempt to fix and parse as JSON array
             try:
                 valid_json_string = '[' + response_text.strip().replace('}\n{', '},\n{') + ']'
                 parsed_json = json.loads(valid_json_string)
@@ -286,13 +304,11 @@ class S3ImageProcessor:
             print(f"General Error: {err}")
             return None
 
-    def move_s3_file(self,original_key,new_folder):
-
+    def move_s3_file(self,original_key,parent_id,new_folder):
+ 
         file_name = original_key.split('/')[-1]
-
-        new_key = f"{new_folder}/{file_name}"
-
-        # Copy the file to the new key in the same bucket
+        string_number = str(parent_id)
+        new_key = f"{new_folder}/{string_number}/{file_name}"
         try:
             self.s3_client.copy_object(Bucket=S3_BUCKET, CopySource={'Bucket':S3_BUCKET , 'Key': original_key}, Key=new_key)
             print(f"File copied to {new_key} successfully.")
@@ -310,6 +326,40 @@ class S3ImageProcessor:
 
         # Return the new key after successful move
         return new_key
+    
+    def store_metadata_result(video_link):
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        cursor.execute(INSERT_RESULTS, (video_link, 'Video', now))
+        parent_id  = cursor.fetchone()[0]
+        return parent_id
+
+    def store_metadata_output_result(parent_id, group_id, document_link, response):
+        
+        values_to_insert = []
+        rule_id = 1
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        for result in response['results']:
+            rule = result['rule_name']
+            rule_name = result['rule_defination']
+            validation_result = result['Validation_result']
+            validation_comment = result['Validation_comment']
+            values_to_insert.append(
+                (parent_id, group_id, document_link, rule_id, rule, rule_name, validation_result, validation_comment, now)
+            )
+            rule_id += 1
+
+        try:
+            cursor.executemany(
+                """INSERT INTO output_results 
+                (parent_id, group_id, document_link, rule_id, rule, rulename, answer, output, time_stamp)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                values_to_insert
+            )
+            cursor.connection.commit()
+        except Exception as e:
+            cursor.connection.rollback()
+            raise e
 
     def process_images(self):
         s3_files = self.list_s3_files()
@@ -321,6 +371,9 @@ class S3ImageProcessor:
             print(str(e))
         responses = []
         try:
+            parent_id = self.store_metadata_result(self.video_link)
+             
+            group_id =1 
             for s3_file in s3_files:
                 s3_object = self.s3_client.get_object(Bucket=self.s3_bucket_name, Key=s3_file)
                 image_data = s3_object['Body'].read()
@@ -341,16 +394,17 @@ class S3ImageProcessor:
                     keep_response = any(item['Validation_result'] == 'YES' for item in parsed_response)
 
                     if keep_response:
-                        move_file = self.move_s3_file(s3_file, "processed_frames")
-                        
+                        move_file = self.move_s3_file(s3_file, parent_id , "processed_frames")
+                        document_link = f"{self.s3_bucket_name}/{move_file}"
                         formatted_response = {
                             "file_name": f"{self.s3_bucket_name}/{move_file}",
                             "results": parsed_response
                         }
 
-                        print("<----------------------------formatted response------------------->")
-                        print("type of formated response -->",type(formatted_response))
-                        print(formatted_response)
+                        # parent_id = self.store_metadata_result()
+                        print("Storing_output_data")
+                        self.store_metadata_output_result(group_id=group_id, document_link=document_link,response=formatted_response)
+                        group_id += 1
                         responses.append(formatted_response)
 
                         
