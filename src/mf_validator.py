@@ -119,6 +119,10 @@ def list_dataset_info():
     sot = Source_of_Truth()
     return sot.list_dataset_info()
 
+def list_dataset_records(type_id):
+    sot = Source_of_Truth()
+    return sot.list_dataset_records(type_id)
+
 def list_scheme(dataset_name):
     sot = Source_of_Truth()
     return sot.list_scheme(dataset_name)

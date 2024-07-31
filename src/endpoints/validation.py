@@ -15,6 +15,9 @@ class S3Key(BaseModel):
 class List_scheme(BaseModel):
     dataset: str
 
+class DRecord(BaseModel):
+    type_id: int
+
 @router.post("/validation")
 async def validation(file: UploadFile = File(...), program_type: str = Form(...), media_type: str = Form(...), dataset_name: str = Form(...), scheme_name: str = Form(...)):
     try:
@@ -184,6 +187,10 @@ def list_dataset():
 @router.get("/list_dataset_info")
 def list_dataset_info():
     return mf_validator.list_dataset_info()
+
+@router.post("/list_dataset_records")
+def list_dataset_records(DR:DRecord):
+    return mf_validator.list_dataset_records(DR.type_id)
 
 
 @router.post("/list_schemes")

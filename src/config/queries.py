@@ -133,10 +133,10 @@ NEXTVAL_GROUP_ID = "SELECT nextval('group_id_seq')"
 
 
 INSERT_RESULTS = """ INSERT INTO results (video_link, media_type, time_stamp)
-                    VALUES (%s, %s, %s) RETURNING parent_id
+                    VALUES ( %s, %s, %s) RETURNING parent_id
                     """
 INSERT_OUTPUT_RESULTS = """INSERT INTO output_results (parent_id, group_id, document_link, rule_id, rule, rulename, answer, output, time_stamp)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
                     """
 INSERT_OUTPUT = ""
 ## Queries for User Managememnt
@@ -185,18 +185,17 @@ INSERT_RECORD_QUERY = """
                 INSERT INTO Ref_dset_records (type_id, col_name, col_value, lk_colname, lk_colvalue)
                 VALUES %s;
                 """
-LIST_DATASET = """SELECT dset_name from  Ref_dset_master;"""
+LIST_DATASET = """SELECT dset_name from  ref_dset_master;"""
 
 
-LIST_DATASET_INFO = """ SELECT
-                        m.dset_name,
-                        m.description,
-                        m.all_col_names,
-                        FROM
-                        ref_dset_master m
-                        JOIN
-                        ref_dset_records r ON m.id = r.type_id;
+LIST_DATASET_INFO = """ SELECT id ,dset_name, description, all_col_names FROM ref_dset_master;
 """
+
+LIST_DATASET_RECORDS =  """
+SELECT  col_name, col_value, lk_colname, lk_colvalue
+FROM ref_dset_records where type_id = %s
+"""
+
 
 LIST_SCHEME = """
                 SELECT DISTINCT r.lk_colvalue
@@ -204,3 +203,5 @@ LIST_SCHEME = """
                 JOIN ref_dset_records r ON m.id = r.type_id
                 WHERE m.dset_name = %s;
 """
+
+

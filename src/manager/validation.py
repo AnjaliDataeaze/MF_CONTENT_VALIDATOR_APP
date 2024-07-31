@@ -16,7 +16,7 @@ import numpy as np
 import cv2
 from botocore.exceptions import NoCredentialsError
 from src.config.credentials import aws_access_key_id, aws_secret_access_key, db_config, region_name
-from src.config.queries import GET_PROGRAM_ID, GET_Rule_ID_ASSOCIATED_WITH_PROGRAM, GET_DECRIPTION_FOR_RULE_ID, RETURN_OUTPUT, CREATE_SEQUENCE_GROUP_ID,NEXTVAL_GROUP_ID, INSERT_OUTPUT
+from src.config.queries import GET_PROGRAM_ID, GET_Rule_ID_ASSOCIATED_WITH_PROGRAM, GET_DECRIPTION_FOR_RULE_ID, RETURN_OUTPUT, CREATE_SEQUENCE_GROUP_ID,NEXTVAL_GROUP_ID
 from src.config.prompts import prompt_from_config, source_of_truth
 
 logger = logging.getLogger(__name__)
