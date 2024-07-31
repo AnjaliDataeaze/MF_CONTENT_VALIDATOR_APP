@@ -141,7 +141,6 @@ async def validation(file: UploadFile = File(...), program_type: str = Form(...)
                     return {"status": "SUCCESS" , "Data": response}
 
             elif operations[0] == 'audio_analysis':
-                print("calling Audio analysis")
                 data = mf_validator.transcript(file_location, program_type)
                 os.remove(file_location)
                 if data is None:
@@ -159,7 +158,7 @@ async def gets3image(s3key:S3Key):
     return {"status": "SUCCESS" , "data": response}
         
         
-@router.post("/source_of_truth")
+@router.post("/add_reference_dataset")
 async def validation(file: UploadFile = File(...), dataset_name: str = Form(...), description: str = Form(...),  lookup_column: str = Form(...)):
     try:
         file_location = f"temp_files/{file.filename}"
@@ -177,10 +176,16 @@ async def validation(file: UploadFile = File(...), dataset_name: str = Form(...)
 
         
     
-@router.get("/source_of_truth/list_dataset")
+@router.get("/list_datasets")
 def list_dataset():
     return mf_validator.list_dataset() 
 
-@router.post("/source_of_truth/list_scheme")
+
+@router.get("/list_dataset_info")
+def list_dataset_info():
+    return mf_validator.list_dataset_info()
+
+
+@router.post("/list_schemes")
 def list_scheme(listscheme:List_scheme):
     return mf_validator.list_scheme(listscheme.dataset) 
