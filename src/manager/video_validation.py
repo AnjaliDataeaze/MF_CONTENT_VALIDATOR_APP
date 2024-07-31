@@ -13,7 +13,7 @@ import os
 import psycopg2
 import imagehash
 import logging
-import datetime
+from datetime import datetime
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -48,7 +48,6 @@ class VideoProcessor:
         s3_file = os.path.basename(self.video_path)
         s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
                         aws_secret_access_key=aws_secret_access_key)
-
         try:
             s3.upload_file(self.video_path, S3_BUCKET, s3_file)
             print("Upload Successful")
@@ -59,7 +58,6 @@ class VideoProcessor:
         except NoCredentialsError:
             print("Credentials not available")
             return None
-        
         
     def get_video_properties(self):
         cap = cv2.VideoCapture(self.video_path)
@@ -131,7 +129,10 @@ class VideoProcessor:
 
         cap.release()
 
-     
+    def upload_to_s3(self, filename):
+        with open(filename, "rb") as f:
+            self.s3_client.upload_fileobj(f, self.s3_bucket_name, f"{self.s3_folder}/{filename}")
+
     def filter_frames(self):
         response = self.s3_client.list_objects_v2(Bucket=self.s3_bucket_name, Prefix=self.s3_folder)
         s3_files = [obj['Key'] for obj in response.get('Contents', []) if obj['Key'].endswith(('jpg', 'jpeg', 'png'))]
@@ -183,13 +184,19 @@ class VideoProcessor:
   
     def process_video(self):
         try:
+            print("&&&&&&&&&&&&&&&&&&&&&&")
             video_link = self.upload_to_aws()
-            self.get_video_properties()
-            frame_differences = self.calculate_frame_differences()
-            stable_intervals = self.find_stable_intervals(frame_differences)
-            self.capture_frames(stable_intervals)
-            self.filter_frames()
-            self.delete_similar_images()
+            print("Video_link--->", video_link)
+            # self.get_video_properties()
+            # print("))))))))))))))")
+            # frame_differences = self.calculate_frame_differences()
+            # stable_intervals = self.find_stable_intervals(frame_differences)
+            # print("********************")
+            # self.capture_frames(stable_intervals)
+            # self.filter_frames()
+            # print("############################3")
+            # self.delete_similar_images()
+            
             return video_link
         except Exception as e:
             print(str(e))
@@ -197,7 +204,7 @@ class VideoProcessor:
 
 
 class S3ImageProcessor:
-    def __init__(self,program_type, video_link):
+    def __init__(self, program_type, video_link):
         self.program_type = program_type
         self.video_link = video_link
         self.s3_bucket_name = S3_BUCKET
@@ -294,9 +301,7 @@ class S3ImageProcessor:
             except json.JSONDecodeError:
                 pass
 
-            # If all parsing attempts fail, return None
             return None
-
         except json.JSONDecodeError as jde:
             print(f"JSON Decode Error: {jde}")
             return None
@@ -305,7 +310,6 @@ class S3ImageProcessor:
             return None
 
     def move_s3_file(self,original_key,parent_id,new_folder):
- 
         file_name = original_key.split('/')[-1]
         string_number = str(parent_id)
         new_key = f"{new_folder}/{string_number}/{file_name}"
@@ -316,7 +320,6 @@ class S3ImageProcessor:
             print(f"Failed to copy file: {str(e)}")
             return None
 
-        # Delete the original file
         try:
             self.s3_client.delete_object(Bucket=S3_BUCKET, Key=original_key)
             print(f"Original file {original_key} deleted successfully.")
@@ -327,14 +330,20 @@ class S3ImageProcessor:
         # Return the new key after successful move
         return new_key
     
-    def store_metadata_result(video_link):
-        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        cursor.execute(INSERT_RESULTS, (video_link, 'Video', now))
-        parent_id  = cursor.fetchone()[0]
-        return parent_id
+    def store_metadata_result(self):
+        try:
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            cursor.execute(INSERT_RESULTS, (self.video_link, 'Video', now))
+            parent_id  = cursor.fetchone()[0]
+            conn.commit()
+            return parent_id
+        except Exception as e:
+            print(e)
+            if conn:
+                    conn.rollback()
+            return None
 
-    def store_metadata_output_result(parent_id, group_id, document_link, response):
-        
+    def store_metadata_output_result(self, parent_id, group_id, document_link, response):
         values_to_insert = []
         rule_id = 1
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -371,8 +380,9 @@ class S3ImageProcessor:
             print(str(e))
         responses = []
         try:
-            parent_id = self.store_metadata_result(self.video_link)
-             
+            print()
+            parent_id = self.store_metadata_result()
+            print("Parent_id--->", parent_id)
             group_id =1 
             for s3_file in s3_files:
                 s3_object = self.s3_client.get_object(Bucket=self.s3_bucket_name, Key=s3_file)
@@ -403,7 +413,7 @@ class S3ImageProcessor:
 
                         # parent_id = self.store_metadata_result()
                         print("Storing_output_data")
-                        self.store_metadata_output_result(group_id=group_id, document_link=document_link,response=formatted_response)
+                        self.store_metadata_output_result(parent_id=parent_id,group_id=group_id, document_link=document_link,response=formatted_response)
                         group_id += 1
                         responses.append(formatted_response)
 

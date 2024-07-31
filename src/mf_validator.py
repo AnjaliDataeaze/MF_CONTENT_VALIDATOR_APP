@@ -100,8 +100,9 @@ def transcript(input_video, program_type):
 
 def frame_analysis(input_video, program_type):
     frame = VideoProcessor(input_video)
-    frame.process_video()
-    image  = S3ImageProcessor(program_type=program_type)
+    video_link = frame.process_video()
+    print("Image_link--->", video_link)
+    image  = S3ImageProcessor(program_type=program_type, video_link=video_link)
     data = image.process_images()
     return data
 

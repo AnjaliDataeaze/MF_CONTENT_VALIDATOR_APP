@@ -132,8 +132,8 @@ NEXTVAL_GROUP_ID = "SELECT nextval('group_id_seq')"
 
 
 
-INSERT_RESULTS = """ INSERT INTO results (video_link, media_type, time_stamp)
-                    VALUES ( %s, %s, %s) RETURNING parent_id
+INSERT_RESULTS = """ INSERT INTO results (video_link, media_type, timestamp)
+                    VALUES (%s, %s, %s) RETURNING parent_id
                     """
 INSERT_OUTPUT_RESULTS = """INSERT INTO output_results (parent_id, group_id, document_link, rule_id, rule, rulename, answer, output, time_stamp)
                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
@@ -165,7 +165,7 @@ SELECT_RULES_BY_PROGRAM_VIDEO = """
     SELECT r.id, r.rulename, r.disclaimer
     FROM rules r
     JOIN rule_to_program rp ON r.id = rp.rules_id
-    WHERE rp.program_id = %s AND (r.media_type = 'Video' OR r.media_type = 'pdf')
+    WHERE rp.program_id = %s AND (r.media_type = 'Video' OR r.media_type = 'PDF/Image')
 """
 
 SELECT_RULES_BY_PROGRAM_AUDIO = """
