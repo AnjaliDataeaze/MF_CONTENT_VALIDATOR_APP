@@ -101,7 +101,6 @@ class VideoProcessor:
             cap.set(cv2.CAP_PROP_POS_FRAMES, end_frame)
             ret, frame = cap.read()
             if ret:
-
                 # filename = f'frame_{frame_counter}.png' 
                 filename = f'frame_at_{end}_seconds.png' # Use the counter for the filename
                 cv2.imwrite(filename, frame)
@@ -287,7 +286,31 @@ class S3ImageProcessor:
             print(f"General Error: {err}")
             return None
 
-    
+    def move_s3_file(self,original_key,new_folder):
+
+        file_name = original_key.split('/')[-1]
+
+        new_key = f"{new_folder}/{file_name}"
+
+        # Copy the file to the new key in the same bucket
+        try:
+            self.s3_client.copy_object(Bucket=S3_BUCKET, CopySource={'Bucket':S3_BUCKET , 'Key': original_key}, Key=new_key)
+            print(f"File copied to {new_key} successfully.")
+        except Exception as e:
+            print(f"Failed to copy file: {str(e)}")
+            return None
+
+        # Delete the original file
+        try:
+            self.s3_client.delete_object(Bucket=S3_BUCKET, Key=original_key)
+            print(f"Original file {original_key} deleted successfully.")
+        except Exception as e:
+            print(f"Failed to delete original file: {str(e)}")
+            return None
+
+        # Return the new key after successful move
+        return new_key
+
     def process_images(self):
         s3_files = self.list_s3_files()
         rules = self.list_rules()
@@ -305,7 +328,7 @@ class S3ImageProcessor:
                 text = text + "\n" + prompt
                 response = self.generate_response(text)
                 
-                if response:  # Check if the response is not None or empty
+                if response:  
                     if isinstance(response, str):
                         try:
                             parsed_response = json.loads(response)  # Parse only if it's a string
@@ -315,16 +338,24 @@ class S3ImageProcessor:
                     else:
                         parsed_response = response  # Directly use the list
 
-                    print("Parsed the data successfully.")
                     keep_response = any(item['Validation_result'] == 'YES' for item in parsed_response)
 
                     if keep_response:
-                        print("@@@@@@@@@@@@@@@@@@@@@@@")
+                        move_file = self.move_s3_file(s3_file, "processed_frames")
+                        
                         formatted_response = {
-                            "file_name": f"{self.s3_bucket_name}/{s3_file}",
+                            "file_name": f"{self.s3_bucket_name}/{move_file}",
                             "results": parsed_response
                         }
+
+                        print("<----------------------------formatted response------------------->")
+                        print("type of formated response -->",type(formatted_response))
+                        print(formatted_response)
                         responses.append(formatted_response)
+
+                        
+                        
+                        
                     else:
                         print(f"Excluded: All 'Validation_result' statuses are 'NO' for file {s3_file}")
                         try:
