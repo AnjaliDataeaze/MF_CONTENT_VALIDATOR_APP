@@ -46,8 +46,6 @@ s3 = boto3.client(
 )
 
 class ExtractText:
-    # def __init__(self, db_config):
-    #     self.conn = psycopg2.connect(**db_config)
     @staticmethod
     def upload_to_aws(local_file, bucket, s3_file):
         s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
@@ -63,6 +61,7 @@ class ExtractText:
         except NoCredentialsError:
             print("Credentials not available")
             return None
+        
     @staticmethod
     def fetch_rules_and_descriptions(program_name):
         try:
@@ -87,7 +86,7 @@ class ExtractText:
                     cursor.execute(GET_DECRIPTION_FOR_RULE_ID, (rule_id,))
 
                     rules_descriptions.extend(cursor.fetchall())
-            print(rules_descriptions)
+            # print(rules_descriptions)
             return rules_descriptions
         except Exception as e:
             logging.exception("Error fetching rules and descriptions:")
@@ -185,7 +184,7 @@ class ExtractText:
 
             model_id = 'anthropic.claude-3-sonnet-20240229-v1:0'
             system_prompt = "Answer the question from given content."
-            max_tokens = 2000
+            max_tokens = 4000
 
             # Prompt with user turn only.
             user_message =  {"role": "user", "content": input_text}
@@ -218,7 +217,7 @@ class ExtractText:
                     data = []
                     for row in rows:
                         data.append([row[0], row[1], row[2], row[3]])
-                    print(data)
+
                     return data
         except Exception as e:
                 logging.exception("Error in adding output to the database")
@@ -234,13 +233,14 @@ class ExtractText:
             s3_url = text_processor.upload_to_aws(file_path, bucket, s3_file)
             if s3_url is None:
                 return
-
+            
             if s3_url.lower().endswith('.pdf'):
                 extracted_text = text_processor.extract_text_from_pdf(file_path)
             else:
                 extracted_text = text_processor.extract_text_from_image(file_path)
-            # Fetch rules and descriptions
+
             rules_descriptions = text_processor.fetch_rules_and_descriptions(program_type)
+
             if isinstance(rules_descriptions, str):
                 return rules_descriptions  # Return the error message
             else:
@@ -250,17 +250,15 @@ class ExtractText:
 
             results = text_processor.generate_response(content)
 
-            # Construct the document_link with s3_url and current timestamp
             document_link = f"{s3_url}_{datetime.now().isoformat()}"
-
             if isinstance(results, str):
                 try:
                     results = ast.literal_eval(results)
+                    print("-------------",results)
                 except (ValueError, SyntaxError) as e:
                     print(f"Failed to parse results: {e}")
 
             if not isinstance(results, list) or len(rules_descriptions) != len(results):
-
                 raise ValueError("Mismatch between number of rules and results")
 
             # Additional debug: print each element in results to check its structure
@@ -271,14 +269,16 @@ class ExtractText:
                 with conn.cursor() as cursor:
                     # Generate a unique group_id
                     cursor.execute(CREATE_SEQUENCE_GROUP_ID)
-
                     cursor.execute(NEXTVAL_GROUP_ID)
                     group_id = cursor.fetchone()[0]
 
                     # Insert rules_descriptions into the table
                     for i, rule_tuple in enumerate(rules_descriptions):
+                        print("rule-tuple",rule_tuple)
                         rulename = rule_tuple[0]
+                        print(rulename)
                         rule = rule_tuple[1]
+                        print(rule)
                         answer = results[i][0]
                         output = results[i][1]
 
@@ -321,8 +321,7 @@ class ExtractText:
             
             prompt =   f"AI Generated Data >>> {data}  + '\n' + Original Data >> {result_json} + '\n' + Instruction >>>{source_of_truth}"
             response = ExtractText.generate_response(prompt)
-            response_json = json.loads(response)
-            
+            response_json = json.loads(response)    
             return 1, response_json
         except Exception as e:
             return 2, str(e)

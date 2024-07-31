@@ -148,7 +148,6 @@ class Transcrib:
         job_name = f"transcription_job_{current_time}"
         language_code = "en-IN"  
         plain_transcript, words_times= Transcrib().start_transcription_job(job_name, s3_url, language_code)
-        
         rule_list = Transcrib().list_rules(program_type=program_type)
 
         p1 = Transcrib().prompt_for_audio_rule(words_times, prompt_template_audio_duration)
