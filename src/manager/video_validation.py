@@ -7,12 +7,13 @@ from io import BytesIO
 import json
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 from src.config.credentials import db_config, region_name, aws_access_key_id,aws_secret_access_key, S3_BUCKET, S3_FOLDER
-from src.config.queries import PROGRAM_ID, SELECT_RULES_BY_PROGRAM_VIDEO
+from src.config.queries import PROGRAM_ID, SELECT_RULES_BY_PROGRAM_VIDEO, INSERT_RESULTS, INSERT_OUTPUT_RESULTS
 from src.config.prompts import prompt_template_video_frame
 import os
 import psycopg2
 import imagehash
 import logging
+from datetime import datetime
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -42,6 +43,22 @@ class VideoProcessor:
         self.frame_count = None
         self.duration = None
     
+
+    def upload_to_aws(self):
+        s3_file = os.path.basename(self.video_path)
+        s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
+                        aws_secret_access_key=aws_secret_access_key)
+        try:
+            s3.upload_file(self.video_path, S3_BUCKET, s3_file)
+            print("Upload Successful")
+            return f"s3://{S3_BUCKET}/{s3_file}"
+        except FileNotFoundError:
+            print("The file was not found")
+            return None
+        except NoCredentialsError:
+            print("Credentials not available")
+            return None
+        
     def get_video_properties(self):
         cap = cv2.VideoCapture(self.video_path)
         if not cap.isOpened():
@@ -101,7 +118,6 @@ class VideoProcessor:
             cap.set(cv2.CAP_PROP_POS_FRAMES, end_frame)
             ret, frame = cap.read()
             if ret:
-
                 # filename = f'frame_{frame_counter}.png' 
                 filename = f'frame_at_{end}_seconds.png' # Use the counter for the filename
                 cv2.imwrite(filename, frame)
@@ -158,7 +174,7 @@ class VideoProcessor:
                     self.s3_client.delete_object(Bucket=self.s3_bucket_name, Key=del_key)
                     deleted_images.append(del_key)
                     logging.info(f'Deleted: {del_key}')
-                    del hashes[h]  # Ensure to handle this correctly if deletion is not successful
+                    del hashes[h]  
                 except Exception as e:
                     logging.error(f'Error deleting file {del_key}: {e}')
 
@@ -168,19 +184,29 @@ class VideoProcessor:
   
     def process_video(self):
         try:
-            self.get_video_properties()
-            frame_differences = self.calculate_frame_differences()
-            stable_intervals = self.find_stable_intervals(frame_differences)
-            self.capture_frames(stable_intervals)
-            self.filter_frames()
-            self.delete_similar_images()
+            print("&&&&&&&&&&&&&&&&&&&&&&")
+            video_link = self.upload_to_aws()
+            print("Video_link--->", video_link)
+            # self.get_video_properties()
+            # print("))))))))))))))")
+            # frame_differences = self.calculate_frame_differences()
+            # stable_intervals = self.find_stable_intervals(frame_differences)
+            # print("********************")
+            # self.capture_frames(stable_intervals)
+            # self.filter_frames()
+            # print("############################3")
+            # self.delete_similar_images()
+            
+            return video_link
         except Exception as e:
             print(str(e))
+            return None
 
 
 class S3ImageProcessor:
-    def __init__(self,program_type):
+    def __init__(self, program_type, video_link):
         self.program_type = program_type
+        self.video_link = video_link
         self.s3_bucket_name = S3_BUCKET
         self.s3_folder = "frame-analysis"
         self.s3_client = boto3.client(
@@ -216,7 +242,6 @@ class S3ImageProcessor:
             program_id = cursor.fetchone()[0] 
             cursor.execute(SELECT_RULES_BY_PROGRAM_VIDEO, (program_id,))
             rules = cursor.fetchall()
-            print("List of rules-->", rules)
             dictionary = {item[0]: (item[1], item[2]) for item in rules}
             return dictionary           
         except Exception as e:
@@ -259,7 +284,6 @@ class S3ImageProcessor:
             except json.JSONDecodeError:
                 pass
 
-            # Attempt to fix and parse as JSON array
             try:
                 valid_json_string = '[' + response_text.strip().replace('}\n{', '},\n{') + ']'
                 parsed_json = json.loads(valid_json_string)
@@ -277,9 +301,7 @@ class S3ImageProcessor:
             except json.JSONDecodeError:
                 pass
 
-            # If all parsing attempts fail, return None
             return None
-
         except json.JSONDecodeError as jde:
             print(f"JSON Decode Error: {jde}")
             return None
@@ -287,7 +309,67 @@ class S3ImageProcessor:
             print(f"General Error: {err}")
             return None
 
+    def move_s3_file(self,original_key,parent_id,new_folder):
+        file_name = original_key.split('/')[-1]
+        string_number = str(parent_id)
+        new_key = f"{new_folder}/{string_number}/{file_name}"
+        try:
+            self.s3_client.copy_object(Bucket=S3_BUCKET, CopySource={'Bucket':S3_BUCKET , 'Key': original_key}, Key=new_key)
+            print(f"File copied to {new_key} successfully.")
+        except Exception as e:
+            print(f"Failed to copy file: {str(e)}")
+            return None
+
+        try:
+            self.s3_client.delete_object(Bucket=S3_BUCKET, Key=original_key)
+            print(f"Original file {original_key} deleted successfully.")
+        except Exception as e:
+            print(f"Failed to delete original file: {str(e)}")
+            return None
+
+        # Return the new key after successful move
+        return new_key
     
+    def store_metadata_result(self):
+        try:
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            cursor.execute(INSERT_RESULTS, (self.video_link, 'Video', now))
+            parent_id  = cursor.fetchone()[0]
+            conn.commit()
+            return parent_id
+        except Exception as e:
+            print(e)
+            if conn:
+                    conn.rollback()
+            return None
+
+    def store_metadata_output_result(self, parent_id, group_id, document_link, response):
+        values_to_insert = []
+        rule_id = 1
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        for result in response['results']:
+            rule = result['rule_name']
+            rule_name = result['rule_defination']
+            validation_result = result['Validation_result']
+            validation_comment = result['Validation_comment']
+            values_to_insert.append(
+                (parent_id, group_id, document_link, rule_id, rule, rule_name, validation_result, validation_comment, now)
+            )
+            rule_id += 1
+
+        try:
+            cursor.executemany(
+                """INSERT INTO output_results 
+                (parent_id, group_id, document_link, rule_id, rule, rulename, answer, output, time_stamp)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                values_to_insert
+            )
+            cursor.connection.commit()
+        except Exception as e:
+            cursor.connection.rollback()
+            raise e
+
     def process_images(self):
         s3_files = self.list_s3_files()
         rules = self.list_rules()
@@ -298,6 +380,10 @@ class S3ImageProcessor:
             print(str(e))
         responses = []
         try:
+            print()
+            parent_id = self.store_metadata_result()
+            print("Parent_id--->", parent_id)
+            group_id =1 
             for s3_file in s3_files:
                 s3_object = self.s3_client.get_object(Bucket=self.s3_bucket_name, Key=s3_file)
                 image_data = s3_object['Body'].read()
@@ -305,7 +391,7 @@ class S3ImageProcessor:
                 text = text + "\n" + prompt
                 response = self.generate_response(text)
                 
-                if response:  # Check if the response is not None or empty
+                if response:  
                     if isinstance(response, str):
                         try:
                             parsed_response = json.loads(response)  # Parse only if it's a string
@@ -315,16 +401,25 @@ class S3ImageProcessor:
                     else:
                         parsed_response = response  # Directly use the list
 
-                    print("Parsed the data successfully.")
                     keep_response = any(item['Validation_result'] == 'YES' for item in parsed_response)
 
                     if keep_response:
-                        print("@@@@@@@@@@@@@@@@@@@@@@@")
+                        move_file = self.move_s3_file(s3_file, parent_id , "processed_frames")
+                        document_link = f"{self.s3_bucket_name}/{move_file}"
                         formatted_response = {
-                            "file_name": f"{self.s3_bucket_name}/{s3_file}",
+                            "file_name": f"{self.s3_bucket_name}/{move_file}",
                             "results": parsed_response
                         }
+
+                        # parent_id = self.store_metadata_result()
+                        print("Storing_output_data")
+                        self.store_metadata_output_result(parent_id=parent_id,group_id=group_id, document_link=document_link,response=formatted_response)
+                        group_id += 1
                         responses.append(formatted_response)
+
+                        
+                        
+                        
                     else:
                         print(f"Excluded: All 'Validation_result' statuses are 'NO' for file {s3_file}")
                         try:
@@ -365,3 +460,29 @@ class Get_Image_url:
             return  url
         except (NoCredentialsError, PartialCredentialsError):
             return 0
+        
+
+class History:
+
+    def get_history_data_video(parent_id):
+        try:
+            query =""" SELECT DISTINCT ON (document_link) 
+                        document_link,
+                        json_agg(json_build_object(
+                        'rule', rule,
+                        'rulename', rulename,
+                        'answer', answer,
+                        'output', output
+                      ))  AS rule_data
+                        FROM output_results
+                        WHERE parent_id = %s
+                        GROUP BY document_link; """
+            cursor.execute(query, (parent_id,))
+            
+            list_1=cursor.fetchall()
+            conn.commit()
+            print(list_1)
+            return {"status":"SUCCESS","Data": list_1}
+        except Exception as e:
+            data = f"Error: {str(e)}"
+            return {"status":"FAILED","Data": data}

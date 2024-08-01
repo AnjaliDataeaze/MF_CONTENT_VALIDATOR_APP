@@ -100,8 +100,9 @@ def transcript(input_video, program_type):
 
 def frame_analysis(input_video, program_type):
     frame = VideoProcessor(input_video)
-    frame.process_video()
-    image  = S3ImageProcessor(program_type=program_type)
+    video_link = frame.process_video()
+    print("Image_link--->", video_link)
+    image  = S3ImageProcessor(program_type=program_type, video_link=video_link)
     data = image.process_images()
     return data
 
@@ -118,6 +119,10 @@ def list_dataset():
 def list_dataset_info():
     sot = Source_of_Truth()
     return sot.list_dataset_info()
+
+def list_dataset_records(type_id):
+    sot = Source_of_Truth()
+    return sot.list_dataset_records(type_id)
 
 def list_scheme(dataset_name):
     sot = Source_of_Truth()

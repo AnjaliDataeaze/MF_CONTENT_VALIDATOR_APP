@@ -15,6 +15,9 @@ class S3Key(BaseModel):
 class List_scheme(BaseModel):
     dataset: str
 
+class DRecord(BaseModel):
+    dataset_id: int
+
 @router.post("/validation")
 async def validation(file: UploadFile = File(...), program_type: str = Form(...), media_type: str = Form(...), dataset_name: str = Form(...), scheme_name: str = Form(...)):
     try:
@@ -157,6 +160,7 @@ async def gets3image(s3key:S3Key):
     response = mf_validator.get_image_url(s3key.key)
     return {"status": "SUCCESS" , "data": response}
         
+
         
 @router.post("/add_reference_dataset")
 async def validation(file: UploadFile = File(...), dataset_name: str = Form(...), description: str = Form(...),  lookup_column: str = Form(...)):
@@ -175,7 +179,6 @@ async def validation(file: UploadFile = File(...), dataset_name: str = Form(...)
         return {"status": "FAILED" , "data": str(e)}
 
         
-    
 @router.get("/list_datasets")
 def list_dataset():
     return mf_validator.list_dataset() 
@@ -185,7 +188,17 @@ def list_dataset():
 def list_dataset_info():
     return mf_validator.list_dataset_info()
 
+@router.post("/list_dataset_records")
+def list_dataset_records(DR:DRecord):
+    return mf_validator.list_dataset_records(DR.dataset_id)
+
 
 @router.post("/list_schemes")
 def list_scheme(listscheme:List_scheme):
+    return mf_validator.list_scheme(listscheme.dataset) 
+
+#---------------------------------History--------------------------#
+
+@router.post("/history")
+def history(listscheme:List_scheme):
     return mf_validator.list_scheme(listscheme.dataset) 

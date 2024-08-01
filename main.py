@@ -76,6 +76,13 @@ async def validate_content(user=Depends(get_current_user)):
 async def validate_content(user=Depends(get_current_user)):
     return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
+@app.get("/reference-datasets")
+async def validate_content(user=Depends(get_current_user)):
+    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
+
+@app.get("/validation-history")
+async def validate_content(user=Depends(get_current_user)):
+    return HTMLResponse(content=open(BUILD_PATH+"/index.html").read())
 
 @app.get("/login")
 async def login():
