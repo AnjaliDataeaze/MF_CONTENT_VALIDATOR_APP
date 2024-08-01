@@ -460,3 +460,29 @@ class Get_Image_url:
             return  url
         except (NoCredentialsError, PartialCredentialsError):
             return 0
+        
+
+class History:
+
+    def get_history_data_video(parent_id):
+        try:
+            query =""" SELECT DISTINCT ON (document_link) 
+                        document_link,
+                        json_agg(json_build_object(
+                        'rule', rule,
+                        'rulename', rulename,
+                        'answer', answer,
+                        'output', output
+                      ))  AS rule_data
+                        FROM output_results
+                        WHERE parent_id = %s
+                        GROUP BY document_link; """
+            cursor.execute(query, (parent_id,))
+            
+            list_1=cursor.fetchall()
+            conn.commit()
+            print(list_1)
+            return {"status":"SUCCESS","Data": list_1}
+        except Exception as e:
+            data = f"Error: {str(e)}"
+            return {"status":"FAILED","Data": data}
